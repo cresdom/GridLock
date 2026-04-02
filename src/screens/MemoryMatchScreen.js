@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { theme } from "../theme/theme";
 
@@ -22,6 +22,11 @@ function createDeck() {
 export default function MemoryMatchScreen() {
   const [cards, setCards] = useState(createDeck());
   const [selected, setSelected] = useState([]);
+
+  const matches = useMemo(
+    () => cards.filter((card) => card.matched).length / 2,
+    [cards],
+  );
 
   const handleCardPress = (card) => {
     if (card.flipped || card.matched || selected.length === 2) return;
@@ -69,7 +74,9 @@ export default function MemoryMatchScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Memory Match</Text>
-      <Text style={styles.status}>Tap a card to reveal it</Text>
+      <Text style={styles.status}>
+        Matches: {matches}/{symbols.length}
+      </Text>
 
       <View style={styles.grid}>
         {cards.map((card) => (
