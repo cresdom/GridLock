@@ -19,7 +19,7 @@ function createDeck() {
   );
 }
 
-export default function MemoryMatchScreen() {
+export default function MemoryMatchScreen({ navigation }) {
   const [cards, setCards] = useState(createDeck());
   const [selected, setSelected] = useState([]);
 
@@ -100,6 +100,13 @@ export default function MemoryMatchScreen() {
       <TouchableOpacity style={styles.button} onPress={resetGame}>
         <Text style={styles.buttonText}>Restart Game</Text>
       </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.buttonSecondary}
+        onPress={() => navigation.goBack()}
+      >
+        <Text style={styles.buttonText}>Back</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -144,6 +151,13 @@ const styles = StyleSheet.create({
   button: {
     marginTop: 20,
     backgroundColor: theme.colors.accent,
+    padding: 14,
+    borderRadius: 16,
+    width: 220,
+  },
+  buttonSecondary: {
+    marginTop: 12,
+    backgroundColor: theme.colors.button,
     padding: 14,
     borderRadius: 16,
     width: 220,
