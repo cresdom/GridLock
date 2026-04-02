@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
     },
     topSection: {
         paddingHorizontal: 24,
-        paddingTop: 18,
+        paddingTop: 34,
     },
     profileRow: {
         flexDirection: 'row',
