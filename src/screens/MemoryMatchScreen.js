@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import { useMemo, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { theme } from "../theme/theme";
@@ -19,7 +20,7 @@ function createDeck() {
   );
 }
 
-export default function MemoryMatchScreen({ navigation }) {
+export default function MemoryMatchScreen() {
   const [cards, setCards] = useState(createDeck());
   const [selected, setSelected] = useState([]);
   const [currentPlayer, setCurrentPlayer] = useState(1);
@@ -135,7 +136,7 @@ export default function MemoryMatchScreen({ navigation }) {
 
       <TouchableOpacity
         style={styles.buttonSecondary}
-        onPress={() => navigation.goBack()}
+        onPress={() => router.back()}
       >
         <Text style={styles.buttonText}>Back</Text>
       </TouchableOpacity>
