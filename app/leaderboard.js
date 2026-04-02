@@ -1,5 +1,5 @@
-import HomeScreen from '../src/screens/HomeScreen';
+import LeaderboardScreen from '../src/screens/LeaderboardScreen';
 
-export default function Home() {
-    return <HomeScreen />;
+export default function Leaderboard() {
+    return <LeaderboardScreen />;
 }

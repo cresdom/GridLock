@@ -13,5 +13,5 @@
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts"
-  ]
+, "app/tictactoe.js", "app/pong.js", "app/memorymatch.js", "app/leaderboard.js", "app/index.js", "app/home.js", "app/frogger.js", "app/profile.js", "app/_layout.js", "app/(tabs)/index.js"  ]
 }
