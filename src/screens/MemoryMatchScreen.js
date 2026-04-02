@@ -20,7 +20,17 @@ function createDeck() {
 }
 
 export default function MemoryMatchScreen() {
-  const [cards] = useState(createDeck());
+  const [cards, setCards] = useState(createDeck());
+
+  const handleCardPress = (card) => {
+    if (card.flipped || card.matched) return;
+
+    const updatedCards = cards.map((c) =>
+      c.id === card.id ? { ...c, flipped: true } : c,
+    );
+
+    setCards(updatedCards);
+  };
 
   return (
     <View style={styles.container}>
@@ -29,8 +39,14 @@ export default function MemoryMatchScreen() {
 
       <View style={styles.grid}>
         {cards.map((card) => (
-          <TouchableOpacity key={card.id} style={styles.card}>
-            <Text style={styles.cardText}>❔</Text>
+          <TouchableOpacity
+            key={card.id}
+            style={styles.card}
+            onPress={() => handleCardPress(card)}
+          >
+            <Text style={styles.cardText}>
+              {card.flipped ? card.symbol : "❔"}
+            </Text>
           </TouchableOpacity>
         ))}
       </View>
