@@ -1,8 +1,9 @@
+import { router } from "expo-router";
 import { useMemo, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { theme } from "../theme/theme";
 
-const symbols = ["🍓", "🌙", "⭐", "🌸", "🍀", "💜", "🍉", "☀️"];
+const symbols = ["🍓", "⭐", "🦋", "🌸", "🍀", "💜", "🐝", "❄️", "🍒", "🌈"];
 
 function shuffle(array) {
   return [...array].sort(() => Math.random() - 0.5);
@@ -19,7 +20,7 @@ function createDeck() {
   );
 }
 
-export default function MemoryMatchScreen({ navigation }) {
+export default function MemoryMatchScreen() {
   const [cards, setCards] = useState(createDeck());
   const [selected, setSelected] = useState([]);
   const [currentPlayer, setCurrentPlayer] = useState(1);
@@ -135,7 +136,7 @@ export default function MemoryMatchScreen({ navigation }) {
 
       <TouchableOpacity
         style={styles.buttonSecondary}
-        onPress={() => navigation.goBack()}
+        onPress={() => router.back()}
       >
         <Text style={styles.buttonText}>Back</Text>
       </TouchableOpacity>
@@ -185,14 +186,14 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   grid: {
-    width: 330,
+    width: 300,
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "center",
   },
   card: {
-    width: 70,
-    height: 70,
+    width: 62,
+    height: 62,
     margin: 5,
     borderRadius: 12,
     backgroundColor: theme.colors.card,
@@ -200,7 +201,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   cardText: {
-    fontSize: 28,
+    fontSize: 24,
   },
   button: {
     marginTop: 20,
