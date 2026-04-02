@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { theme } from "../theme/theme";
 
@@ -23,11 +23,25 @@ export default function MemoryMatchScreen({ navigation }) {
   const [cards, setCards] = useState(createDeck());
   const [selected, setSelected] = useState([]);
   const [isChecking, setIsChecking] = useState(false);
+  const [moves, setMoves] = useState(0);
+  const [seconds, setSeconds] = useState(0);
 
   const matches = useMemo(
     () => cards.filter((card) => card.matched).length / 2,
     [cards],
   );
+
+  const hasWon = matches === symbols.length;
+
+  useEffect(() => {
+    if (hasWon) return;
+
+    const timer = setInterval(() => {
+      setSeconds((prev) => prev + 1);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [hasWon]);
 
   const handleCardPress = (card) => {
     if (card.flipped || card.matched || selected.length === 2 || isChecking)
@@ -44,6 +58,7 @@ export default function MemoryMatchScreen({ navigation }) {
 
     if (newSelected.length === 2) {
       setIsChecking(true);
+      setMoves((prev) => prev + 1);
 
       const [firstId, secondId] = newSelected;
       const firstCard = updatedCards.find((c) => c.id === firstId);
@@ -81,18 +96,27 @@ export default function MemoryMatchScreen({ navigation }) {
     setCards(createDeck());
     setSelected([]);
     setIsChecking(false);
+    setMoves(0);
+    setSeconds(0);
   };
-
-  const hasWon = matches === symbols.length;
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Memory Match</Text>
+
       <Text style={styles.status}>
         Matches: {matches}/{symbols.length}
       </Text>
+      <Text style={styles.status}>Moves: {moves}</Text>
+      <Text style={styles.status}>Time: {seconds}s</Text>
 
-      {hasWon && <Text style={styles.winText}>You matched them all!</Text>}
+      {hasWon && (
+        <View style={styles.winBox}>
+          <Text style={styles.winText}>You matched them all!</Text>
+          <Text style={styles.summaryText}>Final Moves: {moves}</Text>
+          <Text style={styles.summaryText}>Final Time: {seconds}s</Text>
+        </View>
+      )}
 
       <View style={styles.grid}>
         {cards.map((card) => (
@@ -139,19 +163,30 @@ const styles = StyleSheet.create({
   status: {
     fontSize: 18,
     color: theme.colors.text,
-    marginBottom: 12,
+    marginBottom: 8,
+  },
+  winBox: {
+    alignItems: "center",
+    marginTop: 8,
+    marginBottom: 16,
   },
   winText: {
     fontSize: 20,
     fontWeight: "bold",
     color: theme.colors.accent,
-    marginBottom: 16,
+    marginBottom: 6,
+  },
+  summaryText: {
+    fontSize: 16,
+    color: theme.colors.text,
+    marginBottom: 2,
   },
   grid: {
     width: 320,
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "center",
+    marginTop: 8,
   },
   card: {
     width: 70,
