@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { theme } from "../theme/theme";
 
@@ -21,21 +21,62 @@ function createDeck() {
 
 export default function MemoryMatchScreen() {
   const [cards, setCards] = useState(createDeck());
+  const [selected, setSelected] = useState([]);
+
+  const matches = useMemo(
+    () => cards.filter((card) => card.matched).length / 2,
+    [cards],
+  );
 
   const handleCardPress = (card) => {
-    if (card.flipped || card.matched) return;
+    if (card.flipped || card.matched || selected.length === 2) return;
 
     const updatedCards = cards.map((c) =>
       c.id === card.id ? { ...c, flipped: true } : c,
     );
 
+    const newSelected = [...selected, card.id];
+
     setCards(updatedCards);
+    setSelected(newSelected);
+
+    if (newSelected.length === 2) {
+      const [firstId, secondId] = newSelected;
+      const firstCard = updatedCards.find((c) => c.id === firstId);
+      const secondCard = updatedCards.find((c) => c.id === secondId);
+
+      if (firstCard.symbol === secondCard.symbol) {
+        setTimeout(() => {
+          setCards((prev) =>
+            prev.map((c) =>
+              c.id === firstId || c.id === secondId
+                ? { ...c, matched: true }
+                : c,
+            ),
+          );
+          setSelected([]);
+        }, 500);
+      } else {
+        setTimeout(() => {
+          setCards((prev) =>
+            prev.map((c) =>
+              c.id === firstId || c.id === secondId
+                ? { ...c, flipped: false }
+                : c,
+            ),
+          );
+          setSelected([]);
+        }, 900);
+      }
+    }
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Memory Match</Text>
-      <Text style={styles.status}>Tap a card to reveal it</Text>
+      <Text style={styles.status}>
+        Matches: {matches}/{symbols.length}
+      </Text>
 
       <View style={styles.grid}>
         {cards.map((card) => (
@@ -45,7 +86,7 @@ export default function MemoryMatchScreen() {
             onPress={() => handleCardPress(card)}
           >
             <Text style={styles.cardText}>
-              {card.flipped ? card.symbol : "❔"}
+              {card.flipped || card.matched ? card.symbol : "❔"}
             </Text>
           </TouchableOpacity>
         ))}
