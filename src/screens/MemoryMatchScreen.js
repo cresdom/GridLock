@@ -71,6 +71,11 @@ export default function MemoryMatchScreen() {
     }
   };
 
+  const resetGame = () => {
+    setCards(createDeck());
+    setSelected([]);
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Memory Match</Text>
@@ -91,6 +96,10 @@ export default function MemoryMatchScreen() {
           </TouchableOpacity>
         ))}
       </View>
+
+      <TouchableOpacity style={styles.button} onPress={resetGame}>
+        <Text style={styles.buttonText}>Restart Game</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -131,5 +140,17 @@ const styles = StyleSheet.create({
   },
   cardText: {
     fontSize: 28,
+  },
+  button: {
+    marginTop: 20,
+    backgroundColor: theme.colors.accent,
+    padding: 14,
+    borderRadius: 16,
+    width: 220,
+  },
+  buttonText: {
+    textAlign: "center",
+    fontWeight: "700",
+    color: theme.colors.darkText,
   },
 });
