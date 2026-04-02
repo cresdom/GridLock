@@ -94,15 +94,27 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.bottomNav}>
-            <FontAwesome name="home" size={32} color="#7A43D1"/>
-            <TouchableOpacity onPress={() => router.push('/tictactoe')}>
-            
-            <MaterialIcons name="leaderboard" size={32} color="#7A43D1"/>
-            </TouchableOpacity>
+        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/home')}>
+            <FontAwesome name="home" size={28} color="#7A43D1" />
+        </TouchableOpacity>
 
-            <FontAwesome name="trophy" size={32} color="#7A43D1"/>
+        <View style={styles.navDivider} />
 
-            <FontAwesome name="user" size={32} color="#7A43D1"/>
+        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/leaderboard')}>
+            <MaterialIcons name="leaderboard" size={30} color="#7A43D1" />
+        </TouchableOpacity>
+
+        <View style={styles.navDivider} />
+
+        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/leaderboard')}>
+            <FontAwesome name="trophy" size={28} color="#7A43D1" />
+        </TouchableOpacity>
+
+        <View style={styles.navDivider} />
+
+        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/profile')}>
+            <FontAwesome name="user-o" size={28} color="#7A43D1" />
+        </TouchableOpacity>
         </View>
         </SafeAreaView>
     );
@@ -128,10 +140,10 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     avatar: {
-        width: 58,
-        height: 58,
-        borderRadius: 29,
-        marginRight: 12,
+        width: 78,
+        height: 78,
+        borderRadius: 40,
+        marginRight: 16,
     },
     logoText: {
         fontSize: 20,
@@ -219,17 +231,30 @@ const styles = StyleSheet.create({
         fontWeight: '700',
     },
     bottomNav: {
-        height: 74,
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        bottom: -18,
+        height: 110,
         backgroundColor: '#F7F3FF',
         borderTopWidth: 1,
         borderTopColor: '#DDD2F5',
         flexDirection: 'row',
-        justifyContent: 'space-around',
+        justifyContent: 'space-evenly',
         alignItems: 'center',
-        paddingBottom: 6,
+        paddingBottom: 28,
+        paddingTop: 10,
     },
-    navIcon: {
-        fontSize: 28,
-        color: '#8D63FF',
+
+    navItem: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+
+    navDivider: {
+        width: 1,
+        height: 28,
+        backgroundColor: '#CDBAF6',
     },
 });
