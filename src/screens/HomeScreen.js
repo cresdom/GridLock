@@ -72,7 +72,7 @@ export default function HomeScreen() {
             </View>
         </View>
 
-            <TouchableOpacity onPress={() => router.push('/settings')}>
+            <TouchableOpacity onPress={() => router.push('/profile')}>
                 <Ionicons name="settings-outline" size={26} color="#7A43D1"/>
             </TouchableOpacity>
             </View>
@@ -98,7 +98,7 @@ export default function HomeScreen() {
 
         <View style={styles.bottomNav}>
         <TouchableOpacity style={styles.navItem} onPress={() => router.push('/home')}>
-            <FontAwesome name="home" size={28} color="#7A43D1" />
+            <FontAwesome name="home" size={30} color="#7A43D1" />
         </TouchableOpacity>
 
         <View style={styles.navDivider} />
@@ -110,13 +110,13 @@ export default function HomeScreen() {
         <View style={styles.navDivider} />
 
         <TouchableOpacity style={styles.navItem} onPress={() => router.push('/leaderboard')}>
-            <FontAwesome name="trophy" size={28} color="#7A43D1" />
+            <FontAwesome name="trophy" size={30} color="#7A43D1" />
         </TouchableOpacity>
 
         <View style={styles.navDivider} />
 
         <TouchableOpacity style={styles.navItem} onPress={() => router.push('/profile')}>
-            <FontAwesome name="user-o" size={28} color="#7A43D1" />
+            <Ionicons name="person" size={30} color="#7A43D1" />
         </TouchableOpacity>
         </View>
         </SafeAreaView>
