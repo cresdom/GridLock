@@ -22,6 +22,7 @@ function createDeck() {
 export default function MemoryMatchScreen({ navigation }) {
   const [cards, setCards] = useState(createDeck());
   const [selected, setSelected] = useState([]);
+  const [isChecking, setIsChecking] = useState(false);
 
   const matches = useMemo(
     () => cards.filter((card) => card.matched).length / 2,
@@ -29,7 +30,8 @@ export default function MemoryMatchScreen({ navigation }) {
   );
 
   const handleCardPress = (card) => {
-    if (card.flipped || card.matched || selected.length === 2) return;
+    if (card.flipped || card.matched || selected.length === 2 || isChecking)
+      return;
 
     const updatedCards = cards.map((c) =>
       c.id === card.id ? { ...c, flipped: true } : c,
@@ -41,6 +43,8 @@ export default function MemoryMatchScreen({ navigation }) {
     setSelected(newSelected);
 
     if (newSelected.length === 2) {
+      setIsChecking(true);
+
       const [firstId, secondId] = newSelected;
       const firstCard = updatedCards.find((c) => c.id === firstId);
       const secondCard = updatedCards.find((c) => c.id === secondId);
@@ -55,6 +59,7 @@ export default function MemoryMatchScreen({ navigation }) {
             ),
           );
           setSelected([]);
+          setIsChecking(false);
         }, 500);
       } else {
         setTimeout(() => {
@@ -66,6 +71,7 @@ export default function MemoryMatchScreen({ navigation }) {
             ),
           );
           setSelected([]);
+          setIsChecking(false);
         }, 900);
       }
     }
@@ -74,7 +80,10 @@ export default function MemoryMatchScreen({ navigation }) {
   const resetGame = () => {
     setCards(createDeck());
     setSelected([]);
+    setIsChecking(false);
   };
+
+  const hasWon = matches === symbols.length;
 
   return (
     <View style={styles.container}>
@@ -82,6 +91,8 @@ export default function MemoryMatchScreen({ navigation }) {
       <Text style={styles.status}>
         Matches: {matches}/{symbols.length}
       </Text>
+
+      {hasWon && <Text style={styles.winText}>You matched them all!</Text>}
 
       <View style={styles.grid}>
         {cards.map((card) => (
@@ -128,7 +139,13 @@ const styles = StyleSheet.create({
   status: {
     fontSize: 18,
     color: theme.colors.text,
-    marginBottom: 20,
+    marginBottom: 12,
+  },
+  winText: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: theme.colors.accent,
+    marginBottom: 16,
   },
   grid: {
     width: 320,
