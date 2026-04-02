@@ -59,15 +59,18 @@ export default function HomeScreen() {
         <View style={styles.topSection}>
             <View style={styles.profileRow}>
             <View style={styles.profileLeft}>
-                <Image
-                source={require('../../assets/images/userpic.png')}
-                style={styles.avatar}
-                />
-                <View>
+                <TouchableOpacity onPress={() => router.push('/profile')}>
+                    <Image
+                    source={require('../../assets/images/userpic.png')}
+                    style={styles.avatar}
+                    />
+                </TouchableOpacity>
+
+            <View>
                 <Text style={styles.logoText}>GridLock</Text>
                 <Text style={styles.helloText}>Hey, Ben!</Text>
-                </View>
             </View>
+        </View>
 
             <TouchableOpacity onPress={() => router.push('/profile')}>
                 <Ionicons name="settings-outline" size={26} color="#7A43D1"/>
