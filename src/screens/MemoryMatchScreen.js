@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { theme } from "../theme/theme";
 
-const symbols = ["🍓", "🌙", "⭐", "🌸", "🍀", "💜", "🍉", "☀️"];
+const symbols = ["🍓", "⭐", "🦋", "🌸", "🍀", "💜", "🐝", "❄️", "🍒", "🌈"];
 
 function shuffle(array) {
   return [...array].sort(() => Math.random() - 0.5);
@@ -185,14 +185,14 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   grid: {
-    width: 330,
+    width: 300,
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "center",
   },
   card: {
-    width: 70,
-    height: 70,
+    width: 62,
+    height: 62,
     margin: 5,
     borderRadius: 12,
     backgroundColor: theme.colors.card,
@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   cardText: {
-    fontSize: 28,
+    fontSize: 24,
   },
   button: {
     marginTop: 20,
