@@ -1,12 +1,17 @@
-import { Text, TouchableOpacity, View } from 'react-native';
+import { router } from 'expo-router';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { theme } from '../theme/theme';
 
-export default function SplashScreen({ navigation }) {
+export default function SplashScreen() {
     return (
         <View style={styles.container}>
         <Text style={styles.logo}>🎮</Text>
         <Text style={styles.title}>GridLock</Text>
-        <TouchableOpacity style={styles.button} onPress={() => navigation.replace('Home')}>
+
+        <TouchableOpacity
+            style={styles.button}
+            onPress={() => router.replace('/home')}
+        >
             <Text style={styles.buttonText}>Tap to Begin</Text>
         </TouchableOpacity>
         </View>

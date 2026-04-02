@@ -1,14 +1,16 @@
+import { router } from 'expo-router';
+import React from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { theme } from '../theme/theme';
 
 const games = [
-    { title: 'Tic Tac Toe', screen: 'TicTacToe' },
-    { title: 'Memory Match', screen: 'MemoryMatch' },
-    { title: 'Pong', screen: 'Pong' },
-    { title: 'Frogger', screen: 'Frogger' },
-];
+    { title: 'Tic Tac Toe', route: '/tictactoe' },
+    { title: 'Memory Match', route: '/memorymatch' },
+    { title: 'Pong', route: '/pong' },
+    { title: 'Frogger', route: '/frogger' },
+    ];
 
-export default function HomeScreen({ navigation }) {
+export default function HomeScreen() {
     return (
         <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.heading}>Hey, Ben!</Text>
@@ -18,17 +20,17 @@ export default function HomeScreen({ navigation }) {
             <TouchableOpacity
             key={game.title}
             style={styles.card}
-            onPress={() => navigation.navigate(game.screen)}
+            onPress={() => router.push(game.route)}
             >
             <Text style={styles.cardText}>{game.title}</Text>
             </TouchableOpacity>
         ))}
 
-        <TouchableOpacity style={styles.smallButton} onPress={() => navigation.navigate('Leaderboard')}>
+        <TouchableOpacity style={styles.smallButton} onPress={() => router.push('/leaderboard')}>
             <Text style={styles.smallButtonText}>Leaderboard</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.smallButton} onPress={() => navigation.navigate('Profile')}>
+        <TouchableOpacity style={styles.smallButton} onPress={() => router.push('/profile')}>
             <Text style={styles.smallButtonText}>Profile</Text>
         </TouchableOpacity>
         </ScrollView>
@@ -71,9 +73,9 @@ const styles = StyleSheet.create({
         marginTop: 10,
     },
     smallButtonText: {
-    textAlign: 'center',
-    color: theme.colors.text,
-    fontWeight: '700',
-    fontSize: 16,
+        textAlign: 'center',
+        color: theme.colors.text,
+        fontWeight: '700',
+        fontSize: 16,
     },
 });
