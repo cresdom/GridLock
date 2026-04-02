@@ -102,7 +102,7 @@ export default function ProfileScreen() {
         </TouchableOpacity>
 
         <Image
-            source={require('../../assets/images/GridLock.png')}
+            source={require('../../assets/images/GridLock-plain.png')}
             style={styles.logo}
             resizeMode="contain"
         />
@@ -173,8 +173,8 @@ const styles = StyleSheet.create({
         zIndex: 10,
     },
     logo: {
-        width: 95,
-        height: 95,
+        width: 125,
+        height: 125,
         alignSelf: 'center',
         marginTop: 40,
         marginBottom: 4,
