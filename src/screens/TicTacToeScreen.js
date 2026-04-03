@@ -4,6 +4,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import AchievementPopup from '../components/AchievementPopup';
 import { theme } from '../theme/theme';
 import { unlockAchievement } from '../utils/achievements';
+import { updateTicTacToeStats } from '../utils/stats';
 
 const winningPatterns = [
     [0, 1, 2], [3, 4, 5], [6, 7, 8],
@@ -13,8 +14,8 @@ const winningPatterns = [
 
 export default function TicTacToeScreen() {
     const [board, setBoard] = useState(Array(9).fill(null));
-    const [player, setPlayer] = useState('X');
     const [winner, setWinner] = useState(null);
+    const [isPlayerTurn, setIsPlayerTurn] = useState(true);
 
     const [showPopup, setShowPopup] = useState(false);
     const [unlockedAchievement, setUnlockedAchievement] = useState(null);
@@ -39,14 +40,26 @@ export default function TicTacToeScreen() {
             return newBoard[a];
         }
         }
+
         return newBoard.every((cell) => cell !== null) ? 'Draw' : null;
     };
 
-    const handlePress = async (index) => {
-        if (board[index] || winner) return;
+    const getRandomBotMove = (currentBoard) => {
+        const emptyIndexes = currentBoard
+        .map((cell, index) => (cell === null ? index : null))
+        .filter((index) => index !== null);
+
+        if (emptyIndexes.length === 0) return null;
+
+        const randomIndex = Math.floor(Math.random() * emptyIndexes.length);
+        return emptyIndexes[randomIndex];
+    };
+
+    const handlePlayerMove = async (index) => {
+        if (!isPlayerTurn || board[index] || winner) return;
 
         const newBoard = [...board];
-        newBoard[index] = player;
+        newBoard[index] = 'X';
         setBoard(newBoard);
 
         const result = checkWinner(newBoard);
@@ -54,42 +67,75 @@ export default function TicTacToeScreen() {
         if (result) {
         setWinner(result);
 
-        if (result !== 'Draw') {
-            const achievementResult = await unlockAchievement('tictactoe_winner');
+        if (result === 'X') {
+            await updateTicTacToeStats('win');
 
+            const achievementResult = await unlockAchievement('tictactoe_winner');
             if (achievementResult.newlyUnlocked) {
             setUnlockedAchievement(achievementResult.achievement);
             setShowPopup(true);
             }
+        } else if (result === 'Draw') {
+            await updateTicTacToeStats('draw');
         }
+
+        return;
+        }
+
+        setIsPlayerTurn(false);
+
+        setTimeout(async () => {
+        const botMove = getRandomBotMove(newBoard);
+
+        if (botMove === null) {
+            setIsPlayerTurn(true);
+            return;
+        }
+
+        const botBoard = [...newBoard];
+        botBoard[botMove] = 'O';
+        setBoard(botBoard);
+
+        const botResult = checkWinner(botBoard);
+
+        if (botResult) {
+            setWinner(botResult);
+
+            if (botResult === 'O') {
+            await updateTicTacToeStats('loss');
+            } else if (botResult === 'Draw') {
+            await updateTicTacToeStats('draw');
+            }
         } else {
-        setPlayer(player === 'X' ? 'O' : 'X');
+            setIsPlayerTurn(true);
         }
+        }, 500);
     };
 
     const resetGame = () => {
         setBoard(Array(9).fill(null));
-        setPlayer('X');
         setWinner(null);
+        setIsPlayerTurn(true);
+    };
+
+    const getStatusText = () => {
+        if (winner === 'X') return 'You win!';
+        if (winner === 'O') return 'Bot wins!';
+        if (winner === 'Draw') return 'It is a draw!';
+        return isPlayerTurn ? 'Your Turn (X)' : 'Bot is thinking...';
     };
 
     return (
         <View style={styles.container}>
         <Text style={styles.title}>Tic Tac Toe</Text>
-        <Text style={styles.status}>
-            {winner
-            ? winner === 'Draw'
-                ? 'It is a draw!'
-                : `Winner: ${winner}`
-            : `Current Player: ${player}`}
-        </Text>
+        <Text style={styles.status}>{getStatusText()}</Text>
 
         <View style={styles.grid}>
             {board.map((cell, index) => (
             <TouchableOpacity
                 key={index}
                 style={styles.cell}
-                onPress={() => handlePress(index)}
+                onPress={() => handlePlayerMove(index)}
             >
                 <Text style={styles.cellText}>{cell}</Text>
             </TouchableOpacity>
@@ -119,7 +165,7 @@ export default function TicTacToeScreen() {
     );
 }
 
-    const styles = StyleSheet.create({
+const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: theme.colors.background,
