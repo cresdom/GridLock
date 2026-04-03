@@ -42,16 +42,21 @@ export default function AchievementsScreen() {
 
     return (
         <View style={styles.screen}>
-        <ScrollView contentContainerStyle={styles.container}>
+        <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
             <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
             <Ionicons name="chevron-back" size={28} color="#8E63B7" />
             </TouchableOpacity>
 
-            <FontAwesome name="trophy" size={72} color="#8E63F7" style={styles.topIcon}
-            />
+            <FontAwesome name="trophy" size={72} color="#8E63F7" style={styles.topIcon} />
 
             <View style={styles.titlePill}>
             <Text style={styles.titleText}>Achievements</Text>
+            </View>
+
+            <View style={styles.subtitleWrap}>
+            <Text style={styles.subtitleText}>
+                Unlock achievements by playing games and reaching fun milestones!
+            </Text>
             </View>
 
             <View style={styles.grid}>
@@ -63,20 +68,34 @@ export default function AchievementsScreen() {
                     key={item.id}
                     style={[styles.card, !unlocked && styles.lockedCard]}
                 >
+                    <View style={[styles.iconCircle, !unlocked && styles.lockedIconCircle]}>
                     <Ionicons
-                    name={item.icon}
-                    size={34}
-                    color={unlocked ? '#7A43D1' : '#AAA'}
+                        name={item.icon}
+                        size={34}
+                        color={unlocked ? '#7A43D1' : '#AAA'}
                     />
+                    </View>
+
                     <Text style={[styles.cardTitle, !unlocked && styles.lockedText]}>
                     {item.title}
                     </Text>
+
                     <Text style={[styles.cardDescription, !unlocked && styles.lockedText]}>
                     {item.description}
                     </Text>
 
+                    <View style={styles.statusPill}>
+                    <Text style={[styles.statusText, !unlocked && styles.lockedStatusText]}>
+                        {unlocked ? 'Unlocked' : 'Locked'}
+                    </Text>
+                    </View>
+
                     {!unlocked && (
-                    <Ionicons name="lock-closed" size={16} color="#AAA" style={styles.lockIcon}
+                    <Ionicons
+                        name="lock-closed"
+                        size={16}
+                        color="#AAA"
+                        style={styles.lockIcon}
                     />
                     )}
                 </View>
@@ -90,19 +109,25 @@ export default function AchievementsScreen() {
         </ScrollView>
 
         <View style={styles.bottomNav}>
-            <TouchableOpacity onPress={() => router.push('/home')}>
+            <TouchableOpacity style={styles.navItem} onPress={() => router.push('/home')}>
             <FontAwesome name="home" size={30} color="#7A43D1" />
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => router.push('/stats')}>
+            <View style={styles.navDivider} />
+
+            <TouchableOpacity style={styles.navItem} onPress={() => router.push('/stats')}>
             <MaterialIcons name="leaderboard" size={30} color="#7A43D1" />
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => router.push('/achievements')}>
+            <View style={styles.navDivider} />
+
+            <TouchableOpacity style={styles.navItem} onPress={() => router.push('/achievements')}>
             <FontAwesome name="trophy" size={30} color="#7A43D1" />
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => router.push('/profile')}>
+            <View style={styles.navDivider} />
+
+            <TouchableOpacity style={styles.navItem} onPress={() => router.push('/profile')}>
             <Ionicons name="person" size={30} color="#7A43D1" />
             </TouchableOpacity>
         </View>
@@ -123,27 +148,40 @@ const styles = StyleSheet.create({
     },
     backButton: {
         position: 'absolute',
-        top: 158,
+        top: 168,
         left: 16,
         zIndex: 10,
     },
     topIcon: {
         alignSelf: 'center',
-        marginBottom: 8,
+        marginBottom: 10,
+        marginTop: 6,
     },
     titlePill: {
         alignSelf: 'center',
         backgroundColor: '#CDBAF6',
-        borderRadius: 10,
+        borderRadius: 12,
         minWidth: 220,
-        paddingVertical: 10,
+        paddingVertical: 12,
+        paddingHorizontal: 20,
         alignItems: 'center',
-        marginBottom: 20,
+        marginBottom: 14,
     },
     titleText: {
         color: '#FFFFFF',
-        fontSize: 18,
+        fontSize: 20,
         fontWeight: '700',
+    },
+    subtitleWrap: {
+        alignItems: 'center',
+        marginBottom: 22,
+        paddingHorizontal: 10,
+    },
+    subtitleText: {
+        fontSize: 14,
+        color: '#7D68A8',
+        textAlign: 'center',
+        lineHeight: 20,
     },
     grid: {
         flexDirection: 'row',
@@ -158,14 +196,31 @@ const styles = StyleSheet.create({
         padding: 16,
         marginBottom: 14,
         alignItems: 'center',
-        minHeight: 170,
+        minHeight: 210,
         justifyContent: 'center',
+        shadowColor: '#8C78C9',
+        shadowOpacity: 0.12,
+        shadowRadius: 10,
+        shadowOffset: { width: 0, height: 4 },
+        elevation: 4,
     },
     lockedCard: {
-        opacity: 0.65,
+        opacity: 0.7,
+    },
+    iconCircle: {
+        width: 64,
+        height: 64,
+        borderRadius: 32,
+        backgroundColor: '#F1E9FF',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 10,
+    },
+    lockedIconCircle: {
+        backgroundColor: '#F3F3F3',
     },
     cardTitle: {
-        marginTop: 10,
+        marginTop: 4,
         fontSize: 15,
         fontWeight: '700',
         color: '#7A43D1',
@@ -176,8 +231,25 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: '#7D68A8',
         textAlign: 'center',
+        lineHeight: 18,
+        minHeight: 40,
     },
     lockedText: {
+        color: '#999',
+    },
+    statusPill: {
+        marginTop: 10,
+        backgroundColor: '#EFE7FF',
+        borderRadius: 999,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+    },
+    statusText: {
+        color: '#7A43D1',
+        fontSize: 11,
+        fontWeight: '700',
+    },
+    lockedStatusText: {
         color: '#999',
     },
     lockIcon: {
@@ -186,10 +258,10 @@ const styles = StyleSheet.create({
     resetButton: {
         alignSelf: 'center',
         backgroundColor: '#E9D7FF',
-        paddingVertical: 12,
-        paddingHorizontal: 20,
+        paddingVertical: 13,
+        paddingHorizontal: 24,
         borderRadius: 14,
-        marginTop: 6,
+        marginTop: 8,
         marginBottom: 20,
     },
     resetButtonText: {
@@ -207,8 +279,18 @@ const styles = StyleSheet.create({
         borderTopWidth: 1,
         borderTopColor: '#DDD2F5',
         flexDirection: 'row',
-        justifyContent: 'space-around',
+        justifyContent: 'space-evenly',
         alignItems: 'center',
         paddingBottom: 10,
+    },
+    navItem: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    navDivider: {
+        width: 1,
+        height: 28,
+        backgroundColor: '#CDBAF6',
     },
 });

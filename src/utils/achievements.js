@@ -7,37 +7,79 @@ export const ACHIEVEMENT_LIST = [
         id: 'first_game',
         title: 'First Game',
         description: 'Played your first game.',
-        icon: 'game-controller',
+        icon: 'game-controller-outline',
     },
     {
         id: 'memory_master',
         title: 'Memory Master',
         description: 'Won a Memory Match game.',
-        icon: 'heart',
+        icon: 'heart-outline',
     },
     {
         id: 'tictactoe_winner',
-        title: 'TicTacToe Winner',
+        title: 'Tic Tac Toe Winner',
         description: 'Won a Tic Tac Toe match.',
-        icon: 'close-circle',
+        icon: 'close-circle-outline',
     },
     {
         id: 'pong_player',
         title: 'Pong Player',
         description: 'Played Pong for the first time.',
-        icon: 'tennisball',
+        icon: 'tennisball-outline',
     },
     {
         id: 'frogger_pro',
         title: 'Frogger Pro',
         description: 'Won a Frogger game.',
-        icon: 'paw',
+        icon: 'paw-outline',
     },
     {
-        id: 'top_three',
-        title: 'Top 3 Player',
-        description: 'Reached the top 3 on the leaderboard.',
-        icon: 'trophy',
+        id: 'memory_starter',
+        title: 'Match Maker',
+        description: 'Finished your first Memory Match game.',
+        icon: 'color-wand-outline',
+    },
+    {
+        id: 'memory_perfect',
+        title: 'Perfect Memory',
+        description: 'Completed Memory Match without mistakes.',
+        icon: 'bulb-outline',
+    },
+    {
+        id: 'pong_survivor',
+        title: 'Pong Survivor',
+        description: 'Stayed alive for 30 seconds in Pong.',
+        icon: 'timer-outline',
+    },
+    {
+        id: 'pong_first_score',
+        title: 'On the Board',
+        description: 'Scored your first point in Pong.',
+        icon: 'flash-outline',
+    },
+    {
+        id: 'frogger_escape',
+        title: 'Road Crosser',
+        description: 'Successfully crossed the road in Frogger.',
+        icon: 'leaf-outline',
+    },
+    {
+        id: 'game_addict',
+        title: 'Game Addict',
+        description: 'Played 10 games total.',
+        icon: 'flame-outline',
+    },
+    {
+        id: 'triple_player',
+        title: 'Three in a Row',
+        description: 'Played 3 games in one session.',
+        icon: 'game-controller-outline',
+    },
+    {
+        id: 'returning_player',
+        title: 'Welcome Back',
+        description: 'Came back and played again another time.',
+        icon: 'refresh-outline',
     },
 ];
 
@@ -49,17 +91,17 @@ export async function getUnlockedAchievements() {
         console.log('Error loading achievements:', error);
         return [];
     }
-    }
+}
 
-    export async function saveUnlockedAchievements(unlockedIds) {
+export async function saveUnlockedAchievements(unlockedIds) {
     try {
         await AsyncStorage.setItem(ACHIEVEMENTS_KEY, JSON.stringify(unlockedIds));
     } catch (error) {
         console.log('Error saving achievements:', error);
     }
-    }
+}
 
-    export async function unlockAchievement(id) {
+export async function unlockAchievement(id) {
     try {
         const unlockedIds = await getUnlockedAchievements();
 
@@ -78,7 +120,7 @@ export async function getUnlockedAchievements() {
 
         return {
         newlyUnlocked: true,
-        achievement,
+        achievement: achievement || null,
         };
     } catch (error) {
         console.log('Error unlocking achievement:', error);

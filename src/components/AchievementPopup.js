@@ -6,7 +6,7 @@ export default function AchievementPopup({
     achievement,
     onViewAchievements,
     onClose,
-    }) {
+}) {
     if (!achievement) return null;
 
     return (
@@ -22,6 +22,10 @@ export default function AchievementPopup({
 
             <Text style={styles.achievementName}>{achievement.title}</Text>
             <Text style={styles.description}>{achievement.description}</Text>
+
+            <View style={styles.unlockedBadge}>
+                <Text style={styles.unlockedBadgeText}>Added to your collection</Text>
+            </View>
 
             <TouchableOpacity style={styles.primaryButton} onPress={onViewAchievements}>
                 <Text style={styles.primaryButtonText}>View Achievements</Text>
@@ -50,6 +54,11 @@ const styles = StyleSheet.create({
         borderRadius: 24,
         padding: 24,
         alignItems: 'center',
+        shadowColor: '#000',
+        shadowOpacity: 0.15,
+        shadowRadius: 10,
+        shadowOffset: { width: 0, height: 4 },
+        elevation: 8,
     },
     yay: {
         fontSize: 34,
@@ -84,7 +93,20 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#7D68A8',
         textAlign: 'center',
+        marginBottom: 14,
+        lineHeight: 20,
+    },
+    unlockedBadge: {
+        backgroundColor: '#EDE4FF',
+        borderRadius: 999,
+        paddingHorizontal: 14,
+        paddingVertical: 8,
         marginBottom: 20,
+    },
+    unlockedBadgeText: {
+        color: '#7A43D1',
+        fontSize: 12,
+        fontWeight: '700',
     },
     primaryButton: {
         width: '100%',
