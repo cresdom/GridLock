@@ -1,8 +1,9 @@
+import { router } from "expo-router";
 import { useMemo, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { theme } from "../theme/theme";
 
-const symbols = ["🍓", "🌙", "⭐", "🌸", "🍀", "💜"];
+const symbols = ["🍓", "⭐", "🦋", "🌸", "🍀", "💜", "🐝", "❄️", "🍒", "🌈"];
 
 function shuffle(array) {
   return [...array].sort(() => Math.random() - 0.5);
@@ -19,10 +20,14 @@ function createDeck() {
   );
 }
 
-export default function MemoryMatchScreen({ navigation }) {
+export default function MemoryMatchScreen() {
   const [cards, setCards] = useState(createDeck());
   const [selected, setSelected] = useState([]);
-  const matches = useMemo(
+  const [currentPlayer, setCurrentPlayer] = useState(1);
+  const [player1Score, setPlayer1Score] = useState(0);
+  const [player2Score, setPlayer2Score] = useState(0);
+
+  const totalMatches = useMemo(
     () => cards.filter((c) => c.matched).length / 2,
     [cards],
   );
@@ -33,6 +38,7 @@ export default function MemoryMatchScreen({ navigation }) {
     const updated = cards.map((c) =>
       c.id === card.id ? { ...c, flipped: true } : c,
     );
+
     const newSelected = [...selected, card.id];
     setCards(updated);
     setSelected(newSelected);
@@ -51,6 +57,13 @@ export default function MemoryMatchScreen({ navigation }) {
                 : c,
             ),
           );
+
+          if (currentPlayer === 1) {
+            setPlayer1Score((prev) => prev + 1);
+          } else {
+            setPlayer2Score((prev) => prev + 1);
+          }
+
           setSelected([]);
         }, 500);
       } else {
@@ -62,7 +75,9 @@ export default function MemoryMatchScreen({ navigation }) {
                 : c,
             ),
           );
+
           setSelected([]);
+          setCurrentPlayer((prev) => (prev === 1 ? 2 : 1));
         }, 900);
       }
     }
@@ -71,14 +86,35 @@ export default function MemoryMatchScreen({ navigation }) {
   const resetGame = () => {
     setCards(createDeck());
     setSelected([]);
+    setCurrentPlayer(1);
+    setPlayer1Score(0);
+    setPlayer2Score(0);
   };
+
+  const winnerText = useMemo(() => {
+    if (totalMatches !== symbols.length) return null;
+
+    if (player1Score > player2Score) return "Player 1 Wins!";
+    if (player2Score > player1Score) return "Player 2 Wins!";
+    return "It's a Tie!";
+  }, [totalMatches, player1Score, player2Score]);
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Memory Match</Text>
+
+      <Text style={styles.turnText}>Current Turn: Player {currentPlayer}</Text>
+
+      <View style={styles.scoreBoard}>
+        <Text style={styles.scoreText}>Player 1: {player1Score}</Text>
+        <Text style={styles.scoreText}>Player 2: {player2Score}</Text>
+      </View>
+
       <Text style={styles.status}>
-        Matches: {matches}/{symbols.length}
+        Matches Found: {totalMatches}/{symbols.length}
       </Text>
+
+      {winnerText && <Text style={styles.winner}>{winnerText}</Text>}
 
       <View style={styles.grid}>
         {cards.map((card) => (
@@ -100,7 +136,7 @@ export default function MemoryMatchScreen({ navigation }) {
 
       <TouchableOpacity
         style={styles.buttonSecondary}
-        onPress={() => navigation.goBack()}
+        onPress={() => router.back()}
       >
         <Text style={styles.buttonText}>Back</Text>
       </TouchableOpacity>
@@ -122,20 +158,42 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
     marginBottom: 10,
   },
+  turnText: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: theme.colors.text,
+    marginBottom: 10,
+  },
+  scoreBoard: {
+    width: 260,
+    marginBottom: 12,
+    alignItems: "center",
+  },
+  scoreText: {
+    fontSize: 18,
+    color: theme.colors.text,
+    marginBottom: 4,
+  },
   status: {
     fontSize: 18,
     color: theme.colors.text,
-    marginBottom: 20,
+    marginBottom: 16,
+  },
+  winner: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: theme.colors.accent,
+    marginBottom: 16,
   },
   grid: {
-    width: 320,
+    width: 300,
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "center",
   },
   card: {
-    width: 70,
-    height: 70,
+    width: 62,
+    height: 62,
     margin: 5,
     borderRadius: 12,
     backgroundColor: theme.colors.card,
@@ -143,7 +201,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   cardText: {
-    fontSize: 28,
+    fontSize: 24,
   },
   button: {
     marginTop: 20,
