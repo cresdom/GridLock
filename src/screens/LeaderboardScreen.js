@@ -183,7 +183,7 @@ export default function LeaderboardScreen() {
 
             <View style={styles.navDivider} />
 
-            <TouchableOpacity style={styles.navItem} onPress={() => router.push('/leaderboard')}>
+            <TouchableOpacity style={styles.navItem} onPress={() => router.push('/achievements')}>
                 <FontAwesome name="trophy" size={30} color="#7A43D1" />
             </TouchableOpacity>
 
