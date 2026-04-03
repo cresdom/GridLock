@@ -72,7 +72,7 @@ export default function HomeScreen() {
             </View>
         </View>
 
-            <TouchableOpacity onPress={() => router.push('/profile')}>
+            <TouchableOpacity onPress={() => router.push('/settings')}>
                 <Ionicons name="settings-outline" size={26} color="#7A43D1"/>
             </TouchableOpacity>
             </View>
@@ -109,7 +109,7 @@ export default function HomeScreen() {
 
         <View style={styles.navDivider} />
 
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/leaderboard')}>
+        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/achievements')}>
             <FontAwesome name="trophy" size={30} color="#7A43D1" />
         </TouchableOpacity>
 
