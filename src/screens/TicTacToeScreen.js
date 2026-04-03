@@ -17,27 +17,48 @@ export default function TicTacToeScreen() {
     const [board, setBoard] = useState(Array(9).fill(null));
     const [winner, setWinner] = useState(null);
     const [isPlayerTurn, setIsPlayerTurn] = useState(true);
+    const [moveCount, setMoveCount] = useState(0);
 
     const [showPopup, setShowPopup] = useState(false);
     const [unlockedAchievement, setUnlockedAchievement] = useState(null);
 
     useEffect(() => {
         const setupGame = async () => {
-            await markGameAsPlayed({
+        const playResult = await markGameAsPlayed({
             title: 'Tic Tac Toe',
             route: '/tictactoe',
-            });
+        });
 
-            const result = await unlockAchievement('first_game');
+        const firstGameResult = await unlockAchievement('first_game');
 
-            if (result.newlyUnlocked) {
-            setUnlockedAchievement(result.achievement);
+        if (firstGameResult.newlyUnlocked && firstGameResult.achievement) {
+            setUnlockedAchievement(firstGameResult.achievement);
             setShowPopup(true);
-            }
+            return;
+        }
+
+        const starterResult = await unlockAchievement('tictactoe_starter');
+
+        if (starterResult.newlyUnlocked && starterResult.achievement) {
+            setUnlockedAchievement(starterResult.achievement);
+            setShowPopup(true);
+            return;
+        }
+
+        if (playResult?.unlockedAchievements?.length > 0) {
+            setUnlockedAchievement(playResult.unlockedAchievements[0]);
+            setShowPopup(true);
+        }
         };
 
         setupGame();
     }, []);
+
+    const showAchievementPopup = (achievement) => {
+        if (!achievement) return;
+        setUnlockedAchievement(achievement);
+        setShowPopup(true);
+    };
 
     const checkWinner = (newBoard) => {
         for (let pattern of winningPatterns) {
@@ -45,9 +66,9 @@ export default function TicTacToeScreen() {
         if (newBoard[a] && newBoard[a] === newBoard[b] && newBoard[a] === newBoard[c]) {
             return newBoard[a];
         }
-        }
+    }
 
-        return newBoard.every((cell) => cell !== null) ? 'Draw' : null;
+    return newBoard.every((cell) => cell !== null) ? 'Draw' : null;
     };
 
     const getRandomBotMove = (currentBoard) => {
@@ -66,7 +87,10 @@ export default function TicTacToeScreen() {
 
         const newBoard = [...board];
         newBoard[index] = 'X';
+        const newMoveCount = moveCount + 1;
+
         setBoard(newBoard);
+        setMoveCount(newMoveCount);
 
         const result = checkWinner(newBoard);
 
@@ -76,13 +100,27 @@ export default function TicTacToeScreen() {
         if (result === 'X') {
             await updateTicTacToeStats('win');
 
-            const achievementResult = await unlockAchievement('tictactoe_winner');
-            if (achievementResult.newlyUnlocked) {
-            setUnlockedAchievement(achievementResult.achievement);
-            setShowPopup(true);
+            const winnerAchievement = await unlockAchievement('tictactoe_winner');
+            if (winnerAchievement.newlyUnlocked) {
+            showAchievementPopup(winnerAchievement.achievement);
+            return;
+            }
+
+            if (newMoveCount <= 5) {
+            const quickWinAchievement = await unlockAchievement('tictactoe_quick_win');
+            if (quickWinAchievement.newlyUnlocked) {
+                showAchievementPopup(quickWinAchievement.achievement);
+                return;
+            }
             }
         } else if (result === 'Draw') {
             await updateTicTacToeStats('draw');
+
+            const drawAchievement = await unlockAchievement('tictactoe_draw');
+            if (drawAchievement.newlyUnlocked) {
+            showAchievementPopup(drawAchievement.achievement);
+            return;
+            }
         }
 
         return;
@@ -111,6 +149,12 @@ export default function TicTacToeScreen() {
             await updateTicTacToeStats('loss');
             } else if (botResult === 'Draw') {
             await updateTicTacToeStats('draw');
+
+            const drawAchievement = await unlockAchievement('tictactoe_draw');
+            if (drawAchievement.newlyUnlocked) {
+                showAchievementPopup(drawAchievement.achievement);
+                return;
+            }
             }
         } else {
             setIsPlayerTurn(true);
@@ -118,10 +162,16 @@ export default function TicTacToeScreen() {
         }, 500);
     };
 
-    const resetGame = () => {
+    const resetGame = async () => {
         setBoard(Array(9).fill(null));
         setWinner(null);
         setIsPlayerTurn(true);
+        setMoveCount(0);
+
+        const comebackAchievement = await unlockAchievement('tictactoe_comeback');
+        if (comebackAchievement.newlyUnlocked) {
+        showAchievementPopup(comebackAchievement.achievement);
+        }
     };
 
     const getStatusText = () => {
