@@ -103,7 +103,7 @@ export default function HomeScreen() {
 
         <View style={styles.navDivider} />
 
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/leaderboard')}>
+        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/stats')}>
             <MaterialIcons name="leaderboard" size={30} color="#7A43D1" />
         </TouchableOpacity>
 

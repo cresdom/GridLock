@@ -164,11 +164,11 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#F7F7F7',
         paddingHorizontal: 16,
-        paddingTop: 28,
+        paddingTop: 24,
     },
     backButtonTop: {
         position: 'absolute',
-        top: 194,
+        top: 180,
         left: 14,
         zIndex: 10,
     },
@@ -184,7 +184,8 @@ const styles = StyleSheet.create({
         fontSize: 18,
         color: '#5A1FA6',
         fontWeight: '600',
-        marginBottom: 14,
+        marginBottom: 20,
+        marginTop: -10,
     },
     profileImageWrap: {
         alignSelf: 'center',
