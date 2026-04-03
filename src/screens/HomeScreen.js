@@ -4,8 +4,10 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router, useFocusEffect } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { RectButton, } from 'react-native-gesture-handler';
+import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { getLastPlayedGame } from '../utils/recentlyPlayed';
+import { getLastPlayedGame, resetLastPlayedGame } from '../utils/recentlyPlayed';
 
 const games = [
     {
@@ -54,6 +56,20 @@ export default function HomeScreen() {
     const loadRecentGame = async () => {
         const savedGame = await getLastPlayedGame();
         setLastPlayedGame(savedGame);
+    };
+
+    const handleDeleteRecent = async () => {
+        await resetLastPlayedGame();
+        setLastPlayedGame(null);
+    };
+
+    const renderRightActions = () => {
+        return (
+        <RectButton style={styles.deleteButton} onPress={handleDeleteRecent}>
+            <Ionicons name="trash-outline" size={24} color="#fff" />
+            <Text style={styles.deleteButtonText}>Delete</Text>
+        </RectButton>
+        );
     };
 
     const renderGameCard = ({ item }) => (
@@ -133,29 +149,34 @@ export default function HomeScreen() {
                 decelerationRate="fast"
                 />
             ) : lastPlayedGame ? (
-                <TouchableOpacity
-                style={styles.recentCard}
-                onPress={() => router.push(lastPlayedGame.route)}
-                activeOpacity={0.9}
+                <Swipeable
+                renderRightActions={renderRightActions}
+                overshootRight={false}
                 >
-                <View style={styles.recentTopRow}>
+                <TouchableOpacity
+                    style={styles.recentCard}
+                    onPress={() => router.push(lastPlayedGame.route)}
+                    activeOpacity={0.9}
+                >
+                    <View style={styles.recentTopRow}>
                     <Text style={styles.recentGameTitle}>{lastPlayedGame.title}</Text>
                     <TouchableOpacity onPress={() => router.push(lastPlayedGame.route)}>
-                    <Ionicons name="play-circle-outline" size={28} color="#7A43D1" />
+                        <Ionicons name="play-circle-outline" size={28} color="#7A43D1" />
                     </TouchableOpacity>
-                </View>
+                    </View>
 
-                <Text style={styles.recentInfo}>
+                    <Text style={styles.recentInfo}>
                     Last Played: {formatLastPlayed(lastPlayedGame.lastPlayed)}
-                </Text>
-                <Text style={styles.recentInfo}>
+                    </Text>
+                    <Text style={styles.recentInfo}>
                     Times Played: {lastPlayedGame.timesPlayed}
-                </Text>
+                    </Text>
                 </TouchableOpacity>
+                </Swipeable>
             ) : (
                 <View style={styles.emptyRecentCard}>
                 <Text style={styles.emptyRecentText}>
-                    Nothing to see here yet! Come back when you have played a game!
+                    Nothing to see here yet. Come back when you have played a game!
                 </Text>
                 </View>
             )}
@@ -319,6 +340,20 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#7D68A8',
         marginBottom: 6,
+    },
+    deleteButton: {
+        backgroundColor: '#D9534F',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: 22,
+        marginBottom: 14,
+        paddingHorizontal: 20,
+        minWidth: 100,
+    },
+    deleteButtonText: {
+        color: '#fff',
+        fontWeight: '700',
+        marginTop: 4,
     },
     emptyRecentCard: {
         backgroundColor: '#D8C6FF',
