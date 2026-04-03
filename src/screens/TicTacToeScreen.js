@@ -4,6 +4,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import AchievementPopup from '../components/AchievementPopup';
 import { theme } from '../theme/theme';
 import { unlockAchievement } from '../utils/achievements';
+import { markGameAsPlayed } from '../utils/recentlyPlayed';
 import { updateTicTacToeStats } from '../utils/stats';
 
 const winningPatterns = [
@@ -21,16 +22,21 @@ export default function TicTacToeScreen() {
     const [unlockedAchievement, setUnlockedAchievement] = useState(null);
 
     useEffect(() => {
-        const unlockFirstGame = async () => {
-        const result = await unlockAchievement('first_game');
+        const setupGame = async () => {
+            await markGameAsPlayed({
+            title: 'Tic Tac Toe',
+            route: '/tictactoe',
+            });
 
-        if (result.newlyUnlocked) {
+            const result = await unlockAchievement('first_game');
+
+            if (result.newlyUnlocked) {
             setUnlockedAchievement(result.achievement);
             setShowPopup(true);
-        }
+            }
         };
 
-        unlockFirstGame();
+        setupGame();
     }, []);
 
     const checkWinner = (newBoard) => {

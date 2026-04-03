@@ -1,10 +1,11 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { router } from 'expo-router';
-import React from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import React, { useCallback, useState } from 'react';
 import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { getLastPlayedGame } from '../utils/recentlyPlayed';
 
 const games = [
     {
@@ -33,7 +34,28 @@ const games = [
     },
 ];
 
+function formatLastPlayed(dateString) {
+    if (!dateString) return 'Never played';
+
+    const date = new Date(dateString);
+    return date.toLocaleString();
+}
+
 export default function HomeScreen() {
+    const [activeTab, setActiveTab] = useState('Library');
+    const [lastPlayedGame, setLastPlayedGame] = useState(null);
+
+    useFocusEffect(
+        useCallback(() => {
+        loadRecentGame();
+        }, [])
+    );
+
+    const loadRecentGame = async () => {
+        const savedGame = await getLastPlayedGame();
+        setLastPlayedGame(savedGame);
+    };
+
     const renderGameCard = ({ item }) => (
         <TouchableOpacity
         style={styles.cardWrapper}
@@ -41,7 +63,7 @@ export default function HomeScreen() {
         activeOpacity={0.9}
         >
         <View style={styles.gameCard}>
-            <Image source={item.image} style={styles.gameImage} resizeMode="contain"/>
+            <Image source={item.image} style={styles.gameImage} resizeMode="contain" />
         </View>
 
         <TouchableOpacity
@@ -60,64 +82,108 @@ export default function HomeScreen() {
             <View style={styles.profileRow}>
             <View style={styles.profileLeft}>
                 <TouchableOpacity onPress={() => router.push('/profile')}>
-                    <Image
+                <Image
                     source={require('../../assets/images/userpic.png')}
                     style={styles.avatar}
-                    />
+                />
                 </TouchableOpacity>
 
-            <View>
+                <View>
                 <Text style={styles.logoText}>GridLock</Text>
                 <Text style={styles.helloText}>Hey, Ben!</Text>
+                </View>
             </View>
-        </View>
 
             <TouchableOpacity onPress={() => router.push('/settings')}>
-                <Ionicons name="settings-outline" size={26} color="#7A43D1"/>
+                <Ionicons name="settings-outline" size={26} color="#7A43D1" />
             </TouchableOpacity>
             </View>
 
+            <View style={styles.gamesSection}>
             <Text style={styles.heading}>Games</Text>
 
             <View style={styles.tabsRow}>
-            <Text style={[styles.tabText, styles.activeTab]}>Library</Text>
-            <Text style={styles.tabText}>Recently Played</Text>
+                <TouchableOpacity onPress={() => setActiveTab('Library')}>
+                <Text style={[styles.tabText, activeTab === 'Library' && styles.activeTab]}>
+                    Library
+                </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity onPress={() => setActiveTab('Recently Played')}>
+                <Text
+                    style={[
+                    styles.tabText,
+                    activeTab === 'Recently Played' && styles.activeTab,
+                    ]}
+                >
+                    Recently Played
+                </Text>
+                </TouchableOpacity>
             </View>
 
-            <FlatList
-            data={games}
-            renderItem={renderGameCard}
-            keyExtractor={(item) => item.id}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.carouselContent}
-            snapToAlignment="start"
-            decelerationRate="fast"
-            />
+            {activeTab === 'Library' ? (
+                <FlatList
+                data={games}
+                renderItem={renderGameCard}
+                keyExtractor={(item) => item.id}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.carouselContent}
+                snapToAlignment="start"
+                decelerationRate="fast"
+                />
+            ) : lastPlayedGame ? (
+                <TouchableOpacity
+                style={styles.recentCard}
+                onPress={() => router.push(lastPlayedGame.route)}
+                activeOpacity={0.9}
+                >
+                <View style={styles.recentTopRow}>
+                    <Text style={styles.recentGameTitle}>{lastPlayedGame.title}</Text>
+                    <TouchableOpacity onPress={() => router.push(lastPlayedGame.route)}>
+                    <Ionicons name="play-circle-outline" size={28} color="#7A43D1" />
+                    </TouchableOpacity>
+                </View>
+
+                <Text style={styles.recentInfo}>
+                    Last Played: {formatLastPlayed(lastPlayedGame.lastPlayed)}
+                </Text>
+                <Text style={styles.recentInfo}>
+                    Times Played: {lastPlayedGame.timesPlayed}
+                </Text>
+                </TouchableOpacity>
+            ) : (
+                <View style={styles.emptyRecentCard}>
+                <Text style={styles.emptyRecentText}>
+                    Nothing to see here yet! Come back when you have played a game!
+                </Text>
+                </View>
+            )}
+            </View>
         </View>
 
         <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/home')}>
+            <TouchableOpacity style={styles.navItem} onPress={() => router.push('/home')}>
             <FontAwesome name="home" size={30} color="#7A43D1" />
-        </TouchableOpacity>
+            </TouchableOpacity>
 
-        <View style={styles.navDivider} />
+            <View style={styles.navDivider} />
 
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/stats')}>
+            <TouchableOpacity style={styles.navItem} onPress={() => router.push('/stats')}>
             <MaterialIcons name="leaderboard" size={30} color="#7A43D1" />
-        </TouchableOpacity>
+            </TouchableOpacity>
 
-        <View style={styles.navDivider} />
+            <View style={styles.navDivider} />
 
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/achievements')}>
+            <TouchableOpacity style={styles.navItem} onPress={() => router.push('/achievements')}>
             <FontAwesome name="trophy" size={30} color="#7A43D1" />
-        </TouchableOpacity>
+            </TouchableOpacity>
 
-        <View style={styles.navDivider} />
+            <View style={styles.navDivider} />
 
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/profile')}>
+            <TouchableOpacity style={styles.navItem} onPress={() => router.push('/profile')}>
             <Ionicons name="person" size={30} color="#7A43D1" />
-        </TouchableOpacity>
+            </TouchableOpacity>
         </View>
         </SafeAreaView>
     );
@@ -132,6 +198,7 @@ const styles = StyleSheet.create({
     topSection: {
         paddingHorizontal: 24,
         paddingTop: 34,
+        paddingBottom: 140,
     },
     profileRow: {
         flexDirection: 'row',
@@ -159,15 +226,13 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         marginTop: 2,
     },
-    icon: {
-        fontSize: 28,
-        color: '#7A43D1',
+    gamesSection: {
+        marginTop: 24,
     },
     heading: {
         fontSize: 26,
         color: '#7A5AAA',
         fontWeight: '800',
-        marginTop: 28,
         marginBottom: 14,
     },
     tabsRow: {
@@ -233,6 +298,42 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: '700',
     },
+    recentCard: {
+        backgroundColor: '#D8C6FF',
+        borderRadius: 22,
+        padding: 18,
+        marginBottom: 14,
+    },
+    recentTopRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 10,
+    },
+    recentGameTitle: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: '#6E43B5',
+    },
+    recentInfo: {
+        fontSize: 14,
+        color: '#7D68A8',
+        marginBottom: 6,
+    },
+    emptyRecentCard: {
+        backgroundColor: '#D8C6FF',
+        borderRadius: 22,
+        padding: 24,
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: 160,
+    },
+    emptyRecentText: {
+        fontSize: 16,
+        color: '#7D68A8',
+        textAlign: 'center',
+        lineHeight: 22,
+    },
     bottomNav: {
         position: 'absolute',
         left: 0,
@@ -248,13 +349,11 @@ const styles = StyleSheet.create({
         paddingBottom: 28,
         paddingTop: 10,
     },
-
     navItem: {
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
     },
-
     navDivider: {
         width: 1,
         height: 28,
