@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const STATS_KEY = 'gridlock_stats';
 
-const defaultStats = {
+const defaultStatsTemplate = {
     totalGamesPlayed: 0,
     totalWins: 0,
     totalLosses: 0,
@@ -41,6 +41,10 @@ const defaultStats = {
     },
 };
 
+function createDefaultStats() {
+    return JSON.parse(JSON.stringify(defaultStatsTemplate));
+}
+
 export async function getStats() {
     try {
         const stored = await AsyncStorage.getItem(STATS_KEY);
@@ -49,11 +53,12 @@ export async function getStats() {
         return JSON.parse(stored);
         }
 
-        await AsyncStorage.setItem(STATS_KEY, JSON.stringify(defaultStats));
-        return defaultStats;
+        const freshStats = createDefaultStats();
+        await AsyncStorage.setItem(STATS_KEY, JSON.stringify(freshStats));
+        return freshStats;
     } catch (error) {
         console.log('Error loading stats:', error);
-        return defaultStats;
+        return createDefaultStats();
     }
 }
 
@@ -67,9 +72,12 @@ export async function saveStats(updatedStats) {
 
 export async function resetStats() {
     try {
-        await AsyncStorage.setItem(STATS_KEY, JSON.stringify(defaultStats));
+        const freshStats = createDefaultStats();
+        await AsyncStorage.setItem(STATS_KEY, JSON.stringify(freshStats));
+        return freshStats;
     } catch (error) {
         console.log('Error resetting stats:', error);
+        return createDefaultStats();
     }
 }
 

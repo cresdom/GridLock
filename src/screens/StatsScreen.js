@@ -1,7 +1,7 @@
 import { FontAwesome, Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { getStats, resetStats } from '../utils/stats';
 
 function formatTime(seconds) {
@@ -23,10 +23,27 @@ export default function StatsScreen() {
         setStats(savedStats);
     };
 
-    const handleResetStats = async () => {
-        await resetStats();
-        loadStats();
-    };
+    const handleResetStats = () => {
+        Alert.alert(
+            'Reset Stats',
+            'Are you sure you want to reset all stats?',
+            [
+                {
+                    text: 'Cancel',
+                    style: 'cancel',
+                },
+                {
+                    text: 'Reset',
+                    style: 'destructive',
+                    onPress: async () => {
+                    const freshStats = await resetStats();
+                    setStats(freshStats);
+                    Alert.alert('Done', 'All stats have been reset.');
+                    },
+                },
+            ]
+        );
+};
 
     if (!stats) {
         return (
