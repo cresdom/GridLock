@@ -110,7 +110,7 @@ export default function AchievementsScreen() {
     );
 }
 
-    const styles = StyleSheet.create({
+const styles = StyleSheet.create({
     screen: {
         flex: 1,
         backgroundColor: '#F5F0FF',
