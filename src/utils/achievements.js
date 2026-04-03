@@ -75,12 +75,6 @@ export const ACHIEVEMENT_LIST = [
         description: 'Played 3 games in one session.',
         icon: 'game-controller-outline',
     },
-    {
-        id: 'returning_player',
-        title: 'Welcome Back',
-        description: 'Came back and played again another time.',
-        icon: 'refresh-outline',
-    },
 ];
 
 export async function getUnlockedAchievements() {
