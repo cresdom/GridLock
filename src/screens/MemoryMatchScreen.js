@@ -1,7 +1,11 @@
 import { router } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import AchievementPopup from "../components/AchievementPopup";
 import { theme } from "../theme/theme";
+import { unlockAchievement } from "../utils/achievements";
+import { markGameAsPlayed } from "../utils/recentlyPlayed";
+import { updateMemoryMatchStats } from "../utils/stats";
 
 const symbols = ["🍓", "⭐", "🦋", "🌸", "🍀", "💜", "🐝", "❄️", "🍒", "🌈"];
 
@@ -36,6 +40,13 @@ export default function MemoryMatchScreen() {
   const [gameFinished, setGameFinished] = useState(false);
   const [locked, setLocked] = useState(false);
 
+  const [popupVisible, setPopupVisible] = useState(false);
+  const [currentAchievement, setCurrentAchievement] = useState(null);
+  const [achievementQueue, setAchievementQueue] = useState([]);
+
+  const playTrackedRef = useRef(false);
+  const finishHandledRef = useRef(false);
+
   const totalMatches = useMemo(
     () => cards.filter((c) => c.matched).length / 2,
     [cards],
@@ -59,11 +70,85 @@ export default function MemoryMatchScreen() {
     }
   }, [totalMatches]);
 
-  const handleCardPress = (card) => {
+  useEffect(() => {
+    if (gameFinished && !finishHandledRef.current) {
+      finishHandledRef.current = true;
+      handleGameFinished();
+    }
+  }, [gameFinished]);
+
+  useEffect(() => {
+    if (!popupVisible && !currentAchievement && achievementQueue.length > 0) {
+      const [next, ...rest] = achievementQueue;
+      setCurrentAchievement(next);
+      setPopupVisible(true);
+      setAchievementQueue(rest);
+    }
+  }, [achievementQueue, popupVisible, currentAchievement]);
+
+  const queueAchievements = (items) => {
+    if (!items || items.length === 0) return;
+    setAchievementQueue((prev) => [...prev, ...items]);
+  };
+
+  const trackFirstPlay = async () => {
+    if (playTrackedRef.current) return;
+    playTrackedRef.current = true;
+
+    const unlockedToShow = [];
+
+    const playResult = await markGameAsPlayed({
+      title: "Memory Match",
+      route: "/memorymatch",
+    });
+
+    if (playResult?.unlockedAchievements?.length) {
+      unlockedToShow.push(...playResult.unlockedAchievements);
+    }
+
+    const firstGameResult = await unlockAchievement("first_game");
+    if (firstGameResult.newlyUnlocked && firstGameResult.achievement) {
+      unlockedToShow.push(firstGameResult.achievement);
+    }
+
+    queueAchievements(unlockedToShow);
+  };
+
+  const handleGameFinished = async () => {
+    await updateMemoryMatchStats({
+      completed: true,
+      timeInSeconds: timer,
+      moves,
+    });
+
+    const unlockedToShow = [];
+
+    const starterResult = await unlockAchievement("memory_starter");
+    if (starterResult.newlyUnlocked && starterResult.achievement) {
+      unlockedToShow.push(starterResult.achievement);
+    }
+
+    const masterResult = await unlockAchievement("memory_master");
+    if (masterResult.newlyUnlocked && masterResult.achievement) {
+      unlockedToShow.push(masterResult.achievement);
+    }
+
+    if (moves === symbols.length) {
+      const perfectResult = await unlockAchievement("memory_perfect");
+      if (perfectResult.newlyUnlocked && perfectResult.achievement) {
+        unlockedToShow.push(perfectResult.achievement);
+      }
+    }
+
+    queueAchievements(unlockedToShow);
+  };
+
+  const handleCardPress = async (card) => {
     if (locked || card.flipped || card.matched || selected.length === 2) return;
 
     if (!gameStarted) {
       setGameStarted(true);
+      await trackFirstPlay();
     }
 
     const updated = cards.map((c) =>
@@ -122,6 +207,14 @@ export default function MemoryMatchScreen() {
     setGameStarted(false);
     setGameFinished(false);
     setLocked(false);
+
+    playTrackedRef.current = false;
+    finishHandledRef.current = false;
+  };
+
+  const closePopup = () => {
+    setPopupVisible(false);
+    setCurrentAchievement(null);
   };
 
   return (
@@ -179,6 +272,16 @@ export default function MemoryMatchScreen() {
       >
         <Text style={styles.buttonSecondaryText}>Back</Text>
       </TouchableOpacity>
+
+      <AchievementPopup
+        visible={popupVisible}
+        achievement={currentAchievement}
+        onViewAchievements={() => {
+          closePopup();
+          router.push("/achievements");
+        }}
+        onClose={closePopup}
+      />
     </View>
   );
 }
