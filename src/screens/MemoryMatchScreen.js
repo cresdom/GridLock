@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { theme } from "../theme/theme";
 
@@ -20,18 +20,51 @@ function createDeck() {
   );
 }
 
+function formatTime(seconds) {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+}
+
 export default function MemoryMatchScreen() {
   const [cards, setCards] = useState(createDeck());
   const [selected, setSelected] = useState([]);
   const [score, setScore] = useState(0);
+  const [moves, setMoves] = useState(0);
+  const [timer, setTimer] = useState(0);
+  const [gameStarted, setGameStarted] = useState(false);
+  const [gameFinished, setGameFinished] = useState(false);
+  const [locked, setLocked] = useState(false);
 
   const totalMatches = useMemo(
     () => cards.filter((c) => c.matched).length / 2,
     [cards],
   );
 
+  useEffect(() => {
+    let interval;
+
+    if (gameStarted && !gameFinished) {
+      interval = setInterval(() => {
+        setTimer((prev) => prev + 1);
+      }, 1000);
+    }
+
+    return () => clearInterval(interval);
+  }, [gameStarted, gameFinished]);
+
+  useEffect(() => {
+    if (totalMatches === symbols.length) {
+      setGameFinished(true);
+    }
+  }, [totalMatches]);
+
   const handleCardPress = (card) => {
-    if (card.flipped || card.matched || selected.length === 2) return;
+    if (locked || card.flipped || card.matched || selected.length === 2) return;
+
+    if (!gameStarted) {
+      setGameStarted(true);
+    }
 
     const updated = cards.map((c) =>
       c.id === card.id ? { ...c, flipped: true } : c,
@@ -42,6 +75,9 @@ export default function MemoryMatchScreen() {
     setSelected(newSelected);
 
     if (newSelected.length === 2) {
+      setMoves((prev) => prev + 1);
+      setLocked(true);
+
       const [firstId, secondId] = newSelected;
       const firstCard = updated.find((c) => c.id === firstId);
       const secondCard = updated.find((c) => c.id === secondId);
@@ -58,6 +94,7 @@ export default function MemoryMatchScreen() {
 
           setScore((prev) => prev + 1);
           setSelected([]);
+          setLocked(false);
         }, 500);
       } else {
         setTimeout(() => {
@@ -70,6 +107,7 @@ export default function MemoryMatchScreen() {
           );
 
           setSelected([]);
+          setLocked(false);
         }, 900);
       }
     }
@@ -79,48 +117,67 @@ export default function MemoryMatchScreen() {
     setCards(createDeck());
     setSelected([]);
     setScore(0);
+    setMoves(0);
+    setTimer(0);
+    setGameStarted(false);
+    setGameFinished(false);
+    setLocked(false);
   };
-
-  const winnerText = useMemo(() => {
-    if (totalMatches !== symbols.length) return null;
-    return "You Win!";
-  }, [totalMatches]);
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Memory Match</Text>
 
-      <Text style={styles.scoreText}>Score: {score}</Text>
+      <View style={styles.infoBox}>
+        <Text style={styles.infoText}>Score: {score}</Text>
+        <Text style={styles.infoText}>Moves: {moves}</Text>
+        <Text style={styles.infoText}>Time: {formatTime(timer)}</Text>
+      </View>
 
       <Text style={styles.status}>
         Matches Found: {totalMatches}/{symbols.length}
       </Text>
 
-      {winnerText && <Text style={styles.winner}>{winnerText}</Text>}
+      {gameFinished ? (
+        <View style={styles.winBox}>
+          <Text style={styles.winner}>🎉 You Win! 🎉</Text>
+          <Text style={styles.winStat}>Final Time: {formatTime(timer)}</Text>
+          <Text style={styles.winStat}>Total Moves: {moves}</Text>
+          <Text style={styles.winStat}>
+            Matches: {totalMatches}/{symbols.length}
+          </Text>
 
-      <View style={styles.grid}>
-        {cards.map((card) => (
-          <TouchableOpacity
-            key={card.id}
-            style={styles.card}
-            onPress={() => handleCardPress(card)}
-          >
-            <Text style={styles.cardText}>
-              {card.flipped || card.matched ? card.symbol : "❔"}
-            </Text>
+          <TouchableOpacity style={styles.winButton} onPress={resetGame}>
+            <Text style={styles.buttonText}>Play Again</Text>
           </TouchableOpacity>
-        ))}
-      </View>
+        </View>
+      ) : (
+        <View style={styles.grid}>
+          {cards.map((card) => (
+            <TouchableOpacity
+              key={card.id}
+              style={[styles.card, card.matched && styles.matchedCard]}
+              onPress={() => handleCardPress(card)}
+            >
+              <Text style={styles.cardText}>
+                {card.flipped || card.matched ? card.symbol : "❔"}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
 
-      <TouchableOpacity style={styles.button} onPress={resetGame}>
-        <Text style={styles.buttonText}>Restart Game</Text>
-      </TouchableOpacity>
+      {!gameFinished && (
+        <TouchableOpacity style={styles.button} onPress={resetGame}>
+          <Text style={styles.buttonText}>Restart Game</Text>
+        </TouchableOpacity>
+      )}
 
       <TouchableOpacity
         style={styles.buttonSecondary}
         onPress={() => router.back()}
       >
-        <Text style={styles.buttonText}>Back</Text>
+        <Text style={styles.buttonSecondaryText}>Back</Text>
       </TouchableOpacity>
     </View>
   );
@@ -137,25 +194,29 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 30,
     fontWeight: "bold",
-    color: theme.colors.text,
-    marginBottom: 10,
+    color: "#FFFFFF",
+    marginBottom: 12,
   },
-  scoreText: {
-    fontSize: 20,
+  infoBox: {
+    width: 260,
+    backgroundColor: "#E9DFFF",
+    borderRadius: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginBottom: 12,
+    alignItems: "center",
+  },
+  infoText: {
+    fontSize: 18,
     fontWeight: "700",
-    color: theme.colors.text,
-    marginBottom: 10,
+    color: "#4B2E83",
+    marginBottom: 4,
   },
   status: {
     fontSize: 18,
-    color: theme.colors.text,
+    color: "#FFFFFF",
     marginBottom: 16,
-  },
-  winner: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: theme.colors.accent,
-    marginBottom: 16,
+    fontWeight: "600",
   },
   grid: {
     width: 300,
@@ -168,23 +229,54 @@ const styles = StyleSheet.create({
     height: 62,
     margin: 5,
     borderRadius: 12,
-    backgroundColor: theme.colors.card,
+    backgroundColor: "#F3ECFF",
     justifyContent: "center",
     alignItems: "center",
+  },
+  matchedCard: {
+    backgroundColor: "#F7E287",
   },
   cardText: {
     fontSize: 24,
   },
+  winBox: {
+    width: 300,
+    backgroundColor: "#F3ECFF",
+    borderRadius: 20,
+    padding: 24,
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  winner: {
+    fontSize: 26,
+    fontWeight: "bold",
+    color: "#6C4CCF",
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  winStat: {
+    fontSize: 18,
+    color: "#4B2E83",
+    marginBottom: 6,
+    fontWeight: "600",
+  },
+  winButton: {
+    marginTop: 16,
+    backgroundColor: "#F7E287",
+    paddingVertical: 14,
+    borderRadius: 16,
+    width: 180,
+  },
   button: {
     marginTop: 20,
-    backgroundColor: theme.colors.accent,
+    backgroundColor: "#F7E287",
     padding: 14,
     borderRadius: 16,
     width: 220,
   },
   buttonSecondary: {
     marginTop: 12,
-    backgroundColor: theme.colors.button,
+    backgroundColor: "#7A4ED9",
     padding: 14,
     borderRadius: 16,
     width: 220,
@@ -192,6 +284,13 @@ const styles = StyleSheet.create({
   buttonText: {
     textAlign: "center",
     fontWeight: "700",
-    color: theme.colors.darkText,
+    color: "#3D1F76",
+    fontSize: 18,
+  },
+  buttonSecondaryText: {
+    textAlign: "center",
+    fontWeight: "700",
+    color: "#FFFFFF",
+    fontSize: 18,
   },
 });
