@@ -23,9 +23,7 @@ function createDeck() {
 export default function MemoryMatchScreen() {
   const [cards, setCards] = useState(createDeck());
   const [selected, setSelected] = useState([]);
-  const [currentPlayer, setCurrentPlayer] = useState(1);
-  const [player1Score, setPlayer1Score] = useState(0);
-  const [player2Score, setPlayer2Score] = useState(0);
+  const [score, setScore] = useState(0);
 
   const totalMatches = useMemo(
     () => cards.filter((c) => c.matched).length / 2,
@@ -58,12 +56,7 @@ export default function MemoryMatchScreen() {
             ),
           );
 
-          if (currentPlayer === 1) {
-            setPlayer1Score((prev) => prev + 1);
-          } else {
-            setPlayer2Score((prev) => prev + 1);
-          }
-
+          setScore((prev) => prev + 1);
           setSelected([]);
         }, 500);
       } else {
@@ -77,7 +70,6 @@ export default function MemoryMatchScreen() {
           );
 
           setSelected([]);
-          setCurrentPlayer((prev) => (prev === 1 ? 2 : 1));
         }, 900);
       }
     }
@@ -86,29 +78,19 @@ export default function MemoryMatchScreen() {
   const resetGame = () => {
     setCards(createDeck());
     setSelected([]);
-    setCurrentPlayer(1);
-    setPlayer1Score(0);
-    setPlayer2Score(0);
+    setScore(0);
   };
 
   const winnerText = useMemo(() => {
     if (totalMatches !== symbols.length) return null;
-
-    if (player1Score > player2Score) return "Player 1 Wins!";
-    if (player2Score > player1Score) return "Player 2 Wins!";
-    return "It's a Tie!";
-  }, [totalMatches, player1Score, player2Score]);
+    return "You Win!";
+  }, [totalMatches]);
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Memory Match</Text>
 
-      <Text style={styles.turnText}>Current Turn: Player {currentPlayer}</Text>
-
-      <View style={styles.scoreBoard}>
-        <Text style={styles.scoreText}>Player 1: {player1Score}</Text>
-        <Text style={styles.scoreText}>Player 2: {player2Score}</Text>
-      </View>
+      <Text style={styles.scoreText}>Score: {score}</Text>
 
       <Text style={styles.status}>
         Matches Found: {totalMatches}/{symbols.length}
@@ -158,21 +140,11 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
     marginBottom: 10,
   },
-  turnText: {
+  scoreText: {
     fontSize: 20,
     fontWeight: "700",
     color: theme.colors.text,
     marginBottom: 10,
-  },
-  scoreBoard: {
-    width: 260,
-    marginBottom: 12,
-    alignItems: "center",
-  },
-  scoreText: {
-    fontSize: 18,
-    color: theme.colors.text,
-    marginBottom: 4,
   },
   status: {
     fontSize: 18,
