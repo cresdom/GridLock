@@ -177,7 +177,7 @@ export default function MemoryMatchScreen() {
         style={styles.buttonSecondary}
         onPress={() => router.back()}
       >
-        <Text style={styles.buttonText}>Back</Text>
+        <Text style={styles.buttonSecondaryText}>Back</Text>
       </TouchableOpacity>
     </View>
   );
@@ -194,12 +194,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 30,
     fontWeight: "bold",
-    color: theme.colors.text,
+    color: "#FFFFFF",
     marginBottom: 12,
   },
   infoBox: {
     width: 260,
-    backgroundColor: theme.colors.card,
+    backgroundColor: "#E9DFFF",
     borderRadius: 16,
     paddingVertical: 12,
     paddingHorizontal: 16,
@@ -208,14 +208,15 @@ const styles = StyleSheet.create({
   },
   infoText: {
     fontSize: 18,
-    fontWeight: "600",
-    color: theme.colors.text,
+    fontWeight: "700",
+    color: "#4B2E83",
     marginBottom: 4,
   },
   status: {
     fontSize: 18,
-    color: theme.colors.text,
+    color: "#FFFFFF",
     marginBottom: 16,
+    fontWeight: "600",
   },
   grid: {
     width: 300,
@@ -228,19 +229,19 @@ const styles = StyleSheet.create({
     height: 62,
     margin: 5,
     borderRadius: 12,
-    backgroundColor: theme.colors.card,
+    backgroundColor: "#F3ECFF",
     justifyContent: "center",
     alignItems: "center",
   },
   matchedCard: {
-    backgroundColor: theme.colors.accent,
+    backgroundColor: "#F7E287",
   },
   cardText: {
     fontSize: 24,
   },
   winBox: {
     width: 300,
-    backgroundColor: theme.colors.card,
+    backgroundColor: "#F3ECFF",
     borderRadius: 20,
     padding: 24,
     alignItems: "center",
@@ -249,32 +250,33 @@ const styles = StyleSheet.create({
   winner: {
     fontSize: 26,
     fontWeight: "bold",
-    color: theme.colors.accent,
+    color: "#6C4CCF",
     marginBottom: 12,
     textAlign: "center",
   },
   winStat: {
     fontSize: 18,
-    color: theme.colors.text,
+    color: "#4B2E83",
     marginBottom: 6,
+    fontWeight: "600",
   },
   winButton: {
     marginTop: 16,
-    backgroundColor: theme.colors.accent,
+    backgroundColor: "#F7E287",
     paddingVertical: 14,
     borderRadius: 16,
     width: 180,
   },
   button: {
     marginTop: 20,
-    backgroundColor: theme.colors.accent,
+    backgroundColor: "#F7E287",
     padding: 14,
     borderRadius: 16,
     width: 220,
   },
   buttonSecondary: {
     marginTop: 12,
-    backgroundColor: theme.colors.button,
+    backgroundColor: "#7A4ED9",
     padding: 14,
     borderRadius: 16,
     width: 220,
@@ -282,6 +284,13 @@ const styles = StyleSheet.create({
   buttonText: {
     textAlign: "center",
     fontWeight: "700",
-    color: theme.colors.darkText,
+    color: "#3D1F76",
+    fontSize: 18,
+  },
+  buttonSecondaryText: {
+    textAlign: "center",
+    fontWeight: "700",
+    color: "#FFFFFF",
+    fontSize: 18,
   },
 });
