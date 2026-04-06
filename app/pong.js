@@ -1,6 +1,8 @@
 import { router } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { markGameAsPlayed } from '../utils/recentlyPlayed';
+import { updatePongStats } from '../utils/stats';
 
 const GAME_WIDTH = 320;
 const GAME_HEIGHT = 420;
@@ -36,6 +38,15 @@ export default function PongScreen() {
     const botXRef = useRef((GAME_WIDTH - PADDLE_WIDTH) / 2);
     const playerScoreRef = useRef(0);
     const botScoreRef = useRef(0);
+    const startTimeRef = useRef(null);
+    const finishedStatsRef = useRef(false);
+
+    useEffect(() => {
+        markGameAsPlayed({
+            title: 'Pong',
+            route: '/pong',
+        });
+    }, []);
 
     const setRandomBallDirection = useCallback((serveTo) => {
         const horizontalSpeed = Math.random() * 2 + 1.5;
@@ -70,6 +81,24 @@ export default function PongScreen() {
         [setRandomBallDirection]
     );
 
+    const finishGame = useCallback(async () => {
+        if (finishedStatsRef.current) return;
+        finishedStatsRef.current = true;
+
+        setGameOver(true);
+
+        const result = playerScoreRef.current > botScoreRef.current ? 'win' : 'loss';
+        const timeInSeconds = Math.floor((Date.now() - startTimeRef.current) / 1000);
+
+        await updatePongStats({
+            result,
+            playerScore: playerScoreRef.current,
+            timeInSeconds,
+        });
+
+        setStatusText(result === 'win' ? 'You win!' : 'Bot wins!');
+    }, []);
+
     useEffect(() => {
         if (!gameStarted || gameOver) return;
 
@@ -83,7 +112,6 @@ export default function PongScreen() {
                 nextBallX = ballXRef.current + dxRef.current;
             }
 
-            // Bot AI
             const botCenter = nextBotX + PADDLE_WIDTH / 2;
             const ballCenter = nextBallX + BALL_SIZE / 2;
 
@@ -155,14 +183,12 @@ export default function PongScreen() {
             setBotX(nextBotX);
 
             if (playerScoreRef.current >= WIN_SCORE || botScoreRef.current >= WIN_SCORE) {
-                setGameOver(true);
-                const result = playerScoreRef.current > botScoreRef.current ? 'win' : 'loss';
-                setStatusText(result === 'win' ? 'You win!' : 'Bot wins!');
+                finishGame();
             }
         }, 16);
 
         return () => clearInterval(interval);
-    }, [gameStarted, gameOver, resetBall]);
+    }, [gameStarted, gameOver, finishGame, resetBall]);
 
     const startGame = () => {
         setPlayerScore(0);
@@ -173,6 +199,8 @@ export default function PongScreen() {
 
         playerScoreRef.current = 0;
         botScoreRef.current = 0;
+        finishedStatsRef.current = false;
+        startTimeRef.current = Date.now();
 
         playerXRef.current = (GAME_WIDTH - PADDLE_WIDTH) / 2;
         botXRef.current = (GAME_WIDTH - PADDLE_WIDTH) / 2;
