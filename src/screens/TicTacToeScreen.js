@@ -66,9 +66,9 @@ export default function TicTacToeScreen() {
         if (newBoard[a] && newBoard[a] === newBoard[b] && newBoard[a] === newBoard[c]) {
             return newBoard[a];
         }
-    }
+        }
 
-    return newBoard.every((cell) => cell !== null) ? 'Draw' : null;
+        return newBoard.every((cell) => cell !== null) ? 'Draw' : null;
     };
 
     const getRandomBotMove = (currentBoard) => {
@@ -177,34 +177,56 @@ export default function TicTacToeScreen() {
     const getStatusText = () => {
         if (winner === 'X') return 'You win!';
         if (winner === 'O') return 'Bot wins!';
-        if (winner === 'Draw') return 'It is a draw!';
-        return isPlayerTurn ? 'Your Turn (X)' : 'Bot is thinking...';
+        if (winner === 'Draw') return 'Draw game';
+        return isPlayerTurn ? 'Your turn' : 'Bot is thinking...';
+    };
+
+    const getStatusStyle = () => {
+        if (winner === 'X') return styles.statusWin;
+        if (winner === 'O') return styles.statusLoss;
+        if (winner === 'Draw') return styles.statusDraw;
+        return isPlayerTurn ? styles.statusTurn : styles.statusWaiting;
     };
 
     return (
         <View style={styles.container}>
-        <Text style={styles.title}>Tic Tac Toe</Text>
-        <Text style={styles.status}>{getStatusText()}</Text>
+        <View style={styles.card}>
+            <Text style={styles.title}>Tic Tac Toe</Text>
+            <Text style={styles.subtitle}>You are X · Bot is O</Text>
 
-        <View style={styles.grid}>
+            <View style={[styles.statusBadge, getStatusStyle()]}>
+            <Text style={styles.statusText}>{getStatusText()}</Text>
+            </View>
+
+            <View style={styles.grid}>
             {board.map((cell, index) => (
-            <TouchableOpacity
+                <TouchableOpacity
                 key={index}
                 style={styles.cell}
+                activeOpacity={0.8}
                 onPress={() => handlePlayerMove(index)}
-            >
-                <Text style={styles.cellText}>{cell}</Text>
-            </TouchableOpacity>
+                >
+                <Text
+                    style={[
+                    styles.cellText,
+                    cell === 'X' && styles.xText,
+                    cell === 'O' && styles.oText,
+                    ]}
+                >
+                    {cell}
+                </Text>
+                </TouchableOpacity>
             ))}
+            </View>
+
+            <TouchableOpacity style={styles.buttonPrimary} onPress={resetGame}>
+            <Text style={styles.buttonPrimaryText}>Restart Game</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.buttonSecondary} onPress={() => router.back()}>
+            <Text style={styles.buttonSecondaryText}>Back</Text>
+            </TouchableOpacity>
         </View>
-
-        <TouchableOpacity style={styles.button} onPress={resetGame}>
-            <Text style={styles.buttonText}>Restart Game</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.buttonSecondary} onPress={() => router.back()}>
-            <Text style={styles.buttonText}>Back</Text>
-        </TouchableOpacity>
 
         <AchievementPopup
             visible={showPopup}
@@ -225,57 +247,120 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: theme.colors.background,
-        alignItems: 'center',
         justifyContent: 'center',
-        padding: 24,
+        alignItems: 'center',
+        padding: 20,
+    },
+    card: {
+        width: '100%',
+        maxWidth: 380,
+        backgroundColor: theme.colors.card,
+        borderRadius: 28,
+        paddingVertical: 28,
+        paddingHorizontal: 20,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOpacity: 0.12,
+        shadowRadius: 14,
+        shadowOffset: { width: 0, height: 6 },
+        elevation: 6,
     },
     title: {
-        fontSize: 30,
-        fontWeight: 'bold',
-        color: theme.colors.text,
-        marginBottom: 10,
+        fontSize: 32,
+        fontWeight: '800',
+        color: '#702999',
+        marginBottom: 6,
     },
-    status: {
-        color: theme.colors.text,
-        fontSize: 18,
-        marginBottom: 20,
+    subtitle: {
+        fontSize: 15,
+        color: '#c662ff',
+        opacity: 0.7,
+        marginBottom: 18,
     },
-    grid: {
-        width: 300,
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-    },
-    cell: {
-        width: 100,
-        height: 100,
-        borderWidth: 2,
-        borderColor: theme.colors.accent,
+    statusBadge: {
+        minWidth: 180,
+        paddingVertical: 10,
+        paddingHorizontal: 16,
+        borderRadius: 999,
         alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: theme.colors.card,
+        marginBottom: 24,
     },
-    cellText: {
-        fontSize: 34,
-        fontWeight: 'bold',
-        color: theme.colors.darkText,
-    },
-    button: {
-        marginTop: 20,
-        backgroundColor: theme.colors.accent,
-        padding: 14,
-        borderRadius: 16,
-        width: 220,
-    },
-    buttonSecondary: {
-        marginTop: 12,
-        backgroundColor: theme.colors.button,
-        padding: 14,
-        borderRadius: 16,
-        width: 220,
-    },
-    buttonText: {
-        textAlign: 'center',
+    statusText: {
+        fontSize: 15,
         fontWeight: '700',
         color: theme.colors.darkText,
+    },
+    statusTurn: {
+        backgroundColor: theme.colors.accent,
+    },
+    statusWaiting: {
+        backgroundColor: theme.colors.button,
+    },
+    statusWin: {
+        backgroundColor: '#A7F3D0',
+    },
+    statusLoss: {
+        backgroundColor: '#FECACA',
+    },
+    statusDraw: {
+        backgroundColor: '#FDE68A',
+    },
+    grid: {
+        width: 312,
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between',
+        marginBottom: 24,
+    },
+    cell: {
+        width: 96,
+        height: 96,
+        marginBottom: 12,
+        borderRadius: 20,
+        borderWidth: 2,
+        borderColor: theme.colors.accent,
+        backgroundColor: theme.colors.background,
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: '#000',
+        shadowOpacity: 0.06,
+        shadowRadius: 6,
+        shadowOffset: { width: 0, height: 3 },
+        elevation: 2,
+    },
+    cellText: {
+        fontSize: 38,
+        fontWeight: '900',
+    },
+    xText: {
+        color: theme.colors.accent,
+    },
+    oText: {
+        color: theme.colors.text,
+    },
+    buttonPrimary: {
+        width: '100%',
+        backgroundColor: theme.colors.accent,
+        paddingVertical: 15,
+        borderRadius: 18,
+        marginBottom: 12,
+    },
+    buttonPrimaryText: {
+        textAlign: 'center',
+        fontWeight: '800',
+        fontSize: 16,
+        color: theme.colors.darkText,
+    },
+    buttonSecondary: {
+        width: '100%',
+        backgroundColor: theme.colors.button,
+        paddingVertical: 15,
+        borderRadius: 18,
+    },
+    buttonSecondaryText: {
+        textAlign: 'center',
+        fontWeight: '700',
+        fontSize: 16,
+        color: theme.colors.text,
     },
 });
