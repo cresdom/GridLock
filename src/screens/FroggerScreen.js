@@ -1,0 +1,131 @@
+import { router } from 'expo-router';
+import React from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+
+export default function FroggerScreen() {
+    return (
+        <View style={styles.container}>
+            <Text style={styles.title}>Frogger</Text>
+            <Text style={styles.status}>Get to the top!</Text>
+            <Text style={styles.levelText}>Level 1 / 3</Text>
+
+            <View style={styles.board}>
+                <Text style={styles.boardPlaceholder}>Game board coming soon</Text>
+            </View>
+
+            <View style={styles.controls}>
+                <TouchableOpacity style={styles.arrowButton}>
+                    <Text style={styles.arrowText}>▲</Text>
+                </TouchableOpacity>
+
+                <View style={styles.middleControls}>
+                    <TouchableOpacity style={styles.arrowButton}>
+                        <Text style={styles.arrowText}>◀</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity style={styles.startButton}>
+                        <Text style={styles.startButtonText}>Start</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity style={styles.arrowButton}>
+                        <Text style={styles.arrowText}>▶</Text>
+                    </TouchableOpacity>
+                </View>
+
+                <TouchableOpacity style={styles.arrowButton}>
+                    <Text style={styles.arrowText}>▼</Text>
+                </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+                <Text style={styles.backButtonText}>Back</Text>
+            </TouchableOpacity>
+        </View>
+    );
+}
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: '#F5F0FF',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 20,
+    },
+    title: {
+        fontSize: 30,
+        fontWeight: '800',
+        color: '#6E43B5',
+        marginBottom: 8,
+    },
+    status: {
+        fontSize: 16,
+        color: '#7D68A8',
+        marginBottom: 6,
+        textAlign: 'center',
+    },
+    levelText: {
+        fontSize: 16,
+        fontWeight: '700',
+        color: '#7A43D1',
+        marginBottom: 14,
+    },
+    board: {
+        width: 340,
+        height: 380,
+        backgroundColor: '#FFFFFF',
+        borderRadius: 20,
+        borderWidth: 2,
+        borderColor: '#D9C7FF',
+        marginBottom: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    boardPlaceholder: {
+        color: '#7D68A8',
+        fontSize: 16,
+    },
+    controls: {
+        alignItems: 'center',
+        marginBottom: 14,
+    },
+    middleControls: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginVertical: 8,
+    },
+    arrowButton: {
+        backgroundColor: '#E9D7FF',
+        width: 64,
+        height: 50,
+        borderRadius: 14,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginHorizontal: 8,
+    },
+    arrowText: {
+        fontSize: 24,
+        fontWeight: '700',
+        color: '#7A43D1',
+    },
+    startButton: {
+        backgroundColor: '#8E63F7',
+        paddingVertical: 14,
+        paddingHorizontal: 20,
+        borderRadius: 14,
+    },
+    startButtonText: {
+        color: '#FFFFFF',
+        fontWeight: '700',
+    },
+    backButton: {
+        backgroundColor: '#D8C6FF',
+        paddingVertical: 12,
+        paddingHorizontal: 30,
+        borderRadius: 14,
+    },
+    backButtonText: {
+        color: '#6E43B5',
+        fontWeight: '700',
+    },
+});
