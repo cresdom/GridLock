@@ -1,6 +1,8 @@
 import { router } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import AchievementPopup from '../components/AchievementPopup';
+import { unlockAchievement } from '../utils/achievements';
 import { markGameAsPlayed } from '../utils/recentlyPlayed';
 import { updatePongStats } from '../utils/stats';
 
@@ -30,6 +32,9 @@ export default function PongScreen() {
     const [gameOver, setGameOver] = useState(false);
     const [statusText, setStatusText] = useState('Tap Start to play Pong');
 
+    const [showPopup, setShowPopup] = useState(false);
+    const [unlockedAchievement, setUnlockedAchievement] = useState(null);
+
     const ballXRef = useRef(GAME_WIDTH / 2 - BALL_SIZE / 2);
     const ballYRef = useRef(GAME_HEIGHT / 2 - BALL_SIZE / 2);
     const dxRef = useRef(2.5);
@@ -39,14 +44,59 @@ export default function PongScreen() {
     const playerScoreRef = useRef(0);
     const botScoreRef = useRef(0);
     const startTimeRef = useRef(null);
+    const firstPointUnlockedRef = useRef(false);
     const finishedStatsRef = useRef(false);
 
     useEffect(() => {
-        markGameAsPlayed({
-            title: 'Pong',
-            route: '/pong',
-        });
+        const setupGame = async () => {
+            const playResult = await markGameAsPlayed({
+                title: 'Pong',
+                route: '/pong',
+            });
+
+            const firstGameResult = await unlockAchievement('first_game');
+
+            if (firstGameResult.newlyUnlocked && firstGameResult.achievement) {
+                setUnlockedAchievement(firstGameResult.achievement);
+                setShowPopup(true);
+                return;
+            }
+
+            const pongPlayerResult = await unlockAchievement('pong_player');
+
+            if (pongPlayerResult.newlyUnlocked && pongPlayerResult.achievement) {
+                setUnlockedAchievement(pongPlayerResult.achievement);
+                setShowPopup(true);
+                return;
+            }
+
+            if (playResult?.unlockedAchievements?.length > 0) {
+                setUnlockedAchievement(playResult.unlockedAchievements[0]);
+                setShowPopup(true);
+            }
+        };
+
+        setupGame();
     }, []);
+
+    const showAchievementPopup = useCallback((achievement) => {
+        if (!achievement) return;
+        setUnlockedAchievement(achievement);
+        setShowPopup(true);
+    }, []);
+
+    const handlePointAchievement = useCallback(
+        async (newScore) => {
+            if (newScore >= 1 && !firstPointUnlockedRef.current) {
+                const result = await unlockAchievement('pong_first_score');
+                if (result.newlyUnlocked) {
+                    firstPointUnlockedRef.current = true;
+                    showAchievementPopup(result.achievement);
+                }
+            }
+        },
+        [showAchievementPopup]
+    );
 
     const setRandomBallDirection = useCallback((serveTo) => {
         const horizontalSpeed = Math.random() * 2 + 1.5;
@@ -162,6 +212,8 @@ export default function PongScreen() {
                 const newPlayerScore = playerScoreRef.current + 1;
                 playerScoreRef.current = newPlayerScore;
                 setPlayerScore(newPlayerScore);
+
+                handlePointAchievement(newPlayerScore);
                 resetBall('player');
                 return;
             }
@@ -170,6 +222,7 @@ export default function PongScreen() {
                 const newBotScore = botScoreRef.current + 1;
                 botScoreRef.current = newBotScore;
                 setBotScore(newBotScore);
+
                 resetBall('bot');
                 return;
             }
@@ -188,7 +241,7 @@ export default function PongScreen() {
         }, 16);
 
         return () => clearInterval(interval);
-    }, [gameStarted, gameOver, finishGame, resetBall]);
+    }, [gameStarted, gameOver, finishGame, handlePointAchievement, resetBall]);
 
     const startGame = () => {
         setPlayerScore(0);
@@ -200,6 +253,7 @@ export default function PongScreen() {
         playerScoreRef.current = 0;
         botScoreRef.current = 0;
         finishedStatsRef.current = false;
+        firstPointUnlockedRef.current = false;
         startTimeRef.current = Date.now();
 
         playerXRef.current = (GAME_WIDTH - PADDLE_WIDTH) / 2;
@@ -269,6 +323,18 @@ export default function PongScreen() {
             <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
                 <Text style={styles.backButtonText}>Back</Text>
             </TouchableOpacity>
+
+            <AchievementPopup
+                visible={showPopup}
+                achievement={unlockedAchievement}
+                onViewAchievements={() => {
+                    setShowPopup(false);
+                    router.push('/achievements');
+                }}
+                onClose={() => {
+                    setShowPopup(false);
+                }}
+            />
         </View>
     );
 }
