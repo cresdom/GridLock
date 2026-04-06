@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const GAME_WIDTH = 320;
@@ -10,17 +10,67 @@ const BALL_SIZE = 16;
 const PLAYER_Y = GAME_HEIGHT - 34;
 const BOT_Y = 22;
 const WIN_SCORE = 5;
+const PLAYER_MOVE_STEP = 45;
 
 export default function PongScreen() {
-    const [playerX] = useState((GAME_WIDTH - PADDLE_WIDTH) / 2);
-    const [botX] = useState((GAME_WIDTH - PADDLE_WIDTH) / 2);
-    const [ballX] = useState(GAME_WIDTH / 2 - BALL_SIZE / 2);
-    const [ballY] = useState(GAME_HEIGHT / 2 - BALL_SIZE / 2);
+    const [playerX, setPlayerX] = useState((GAME_WIDTH - PADDLE_WIDTH) / 2);
+    const [botX, setBotX] = useState((GAME_WIDTH - PADDLE_WIDTH) / 2);
+    const [ballX, setBallX] = useState(GAME_WIDTH / 2 - BALL_SIZE / 2);
+    const [ballY, setBallY] = useState(GAME_HEIGHT / 2 - BALL_SIZE / 2);
 
-    const [playerScore] = useState(0);
-    const [botScore] = useState(0);
+    const [playerScore, setPlayerScore] = useState(0);
+    const [botScore, setBotScore] = useState(0);
 
-    const [statusText] = useState('Tap Start to play Pong');
+    const [gameStarted, setGameStarted] = useState(false);
+    const [gameOver, setGameOver] = useState(false);
+    const [statusText, setStatusText] = useState('Tap Start to play Pong');
+
+    const playerXRef = useRef((GAME_WIDTH - PADDLE_WIDTH) / 2);
+    const botXRef = useRef((GAME_WIDTH - PADDLE_WIDTH) / 2);
+    const ballXRef = useRef(GAME_WIDTH / 2 - BALL_SIZE / 2);
+    const ballYRef = useRef(GAME_HEIGHT / 2 - BALL_SIZE / 2);
+    const dxRef = useRef(2.5);
+    const dyRef = useRef(3);
+    const playerScoreRef = useRef(0);
+    const botScoreRef = useRef(0);
+
+    const startGame = () => {
+        setPlayerScore(0);
+        setBotScore(0);
+        setGameOver(false);
+        setGameStarted(true);
+        setStatusText('Game on!');
+
+        playerScoreRef.current = 0;
+        botScoreRef.current = 0;
+
+        playerXRef.current = (GAME_WIDTH - PADDLE_WIDTH) / 2;
+        botXRef.current = (GAME_WIDTH - PADDLE_WIDTH) / 2;
+        ballXRef.current = GAME_WIDTH / 2 - BALL_SIZE / 2;
+        ballYRef.current = GAME_HEIGHT / 2 - BALL_SIZE / 2;
+
+        dxRef.current = 2.5;
+        dyRef.current = 3;
+
+        setPlayerX(playerXRef.current);
+        setBotX(botXRef.current);
+        setBallX(ballXRef.current);
+        setBallY(ballYRef.current);
+    };
+
+    const movePlayer = (direction) => {
+        if (!gameStarted || gameOver) return;
+
+        let nextX = playerXRef.current + direction * PLAYER_MOVE_STEP;
+
+        if (nextX < 0) nextX = 0;
+        if (nextX > GAME_WIDTH - PADDLE_WIDTH) {
+            nextX = GAME_WIDTH - PADDLE_WIDTH;
+        }
+
+        playerXRef.current = nextX;
+        setPlayerX(nextX);
+    };
 
     return (
         <View style={styles.container}>
@@ -44,13 +94,17 @@ export default function PongScreen() {
             </View>
 
             <View style={styles.controlsRow}>
-                <TouchableOpacity style={styles.controlButton}>
+                <TouchableOpacity style={styles.controlButton} onPress={() => movePlayer(-1)}>
                     <Text style={styles.controlButtonText}>◀ Left</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.controlButtonPrimary}>
-                    <Text style={styles.controlButtonPrimaryText}>Start</Text>
+
+                <TouchableOpacity style={styles.controlButtonPrimary} onPress={startGame}>
+                    <Text style={styles.controlButtonPrimaryText}>
+                        {gameStarted && !gameOver ? 'Restart' : 'Start'}
+                    </Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.controlButton}>
+
+                <TouchableOpacity style={styles.controlButton} onPress={() => movePlayer(1)}>
                     <Text style={styles.controlButtonText}>Right ▶</Text>
                 </TouchableOpacity>
             </View>
