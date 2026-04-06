@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import React, { useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const GAME_WIDTH = 320;
@@ -10,6 +10,9 @@ const BALL_SIZE = 16;
 const PLAYER_Y = GAME_HEIGHT - 34;
 const BOT_Y = 22;
 const WIN_SCORE = 5;
+
+const BOT_SPEED = 2.3;
+const BOT_REACTION_ZONE = 24;
 const PLAYER_MOVE_STEP = 45;
 
 export default function PongScreen() {
@@ -25,14 +28,141 @@ export default function PongScreen() {
     const [gameOver, setGameOver] = useState(false);
     const [statusText, setStatusText] = useState('Tap Start to play Pong');
 
-    const playerXRef = useRef((GAME_WIDTH - PADDLE_WIDTH) / 2);
-    const botXRef = useRef((GAME_WIDTH - PADDLE_WIDTH) / 2);
     const ballXRef = useRef(GAME_WIDTH / 2 - BALL_SIZE / 2);
     const ballYRef = useRef(GAME_HEIGHT / 2 - BALL_SIZE / 2);
     const dxRef = useRef(2.5);
     const dyRef = useRef(3);
+    const playerXRef = useRef((GAME_WIDTH - PADDLE_WIDTH) / 2);
+    const botXRef = useRef((GAME_WIDTH - PADDLE_WIDTH) / 2);
     const playerScoreRef = useRef(0);
     const botScoreRef = useRef(0);
+
+    const setRandomBallDirection = useCallback((serveTo) => {
+        const horizontalSpeed = Math.random() * 2 + 1.5;
+        const verticalSpeed = Math.random() * 1.5 + 2.8;
+
+        const horizontalDirection = Math.random() < 0.5 ? -1 : 1;
+        dxRef.current = horizontalSpeed * horizontalDirection;
+
+        if (serveTo === 'player') {
+            dyRef.current = verticalSpeed;
+        } else if (serveTo === 'bot') {
+            dyRef.current = -verticalSpeed;
+        } else {
+            dyRef.current = Math.random() < 0.5 ? -verticalSpeed : verticalSpeed;
+        }
+    }, []);
+
+    const resetBall = useCallback(
+        (lastScoredBy) => {
+            ballXRef.current = GAME_WIDTH / 2 - BALL_SIZE / 2;
+            ballYRef.current = GAME_HEIGHT / 2 - BALL_SIZE / 2;
+
+            if (lastScoredBy === 'player') {
+                setRandomBallDirection('bot');
+            } else {
+                setRandomBallDirection('player');
+            }
+
+            setBallX(ballXRef.current);
+            setBallY(ballYRef.current);
+        },
+        [setRandomBallDirection]
+    );
+
+    useEffect(() => {
+        if (!gameStarted || gameOver) return;
+
+        const interval = setInterval(() => {
+            let nextBallX = ballXRef.current + dxRef.current;
+            let nextBallY = ballYRef.current + dyRef.current;
+            let nextBotX = botXRef.current;
+
+            if (nextBallX <= 0 || nextBallX + BALL_SIZE >= GAME_WIDTH) {
+                dxRef.current *= -1;
+                nextBallX = ballXRef.current + dxRef.current;
+            }
+
+            // Bot AI
+            const botCenter = nextBotX + PADDLE_WIDTH / 2;
+            const ballCenter = nextBallX + BALL_SIZE / 2;
+
+            if (nextBallY < GAME_HEIGHT / 2) {
+                if (ballCenter < botCenter - BOT_REACTION_ZONE) {
+                    nextBotX -= BOT_SPEED;
+                } else if (ballCenter > botCenter + BOT_REACTION_ZONE) {
+                    nextBotX += BOT_SPEED;
+                }
+            }
+
+            if (nextBotX < 0) nextBotX = 0;
+            if (nextBotX > GAME_WIDTH - PADDLE_WIDTH) {
+                nextBotX = GAME_WIDTH - PADDLE_WIDTH;
+            }
+
+            if (
+                nextBallY <= BOT_Y + PADDLE_HEIGHT &&
+                nextBallX + BALL_SIZE >= nextBotX &&
+                nextBallX <= nextBotX + PADDLE_WIDTH &&
+                dyRef.current < 0
+            ) {
+                dyRef.current *= -1;
+                nextBallY = BOT_Y + PADDLE_HEIGHT;
+
+                const hitPoint =
+                    (nextBallX + BALL_SIZE / 2 - (nextBotX + PADDLE_WIDTH / 2)) /
+                    (PADDLE_WIDTH / 2);
+                dxRef.current = hitPoint * 3.2;
+            }
+
+            if (
+                nextBallY + BALL_SIZE >= PLAYER_Y &&
+                nextBallX + BALL_SIZE >= playerXRef.current &&
+                nextBallX <= playerXRef.current + PADDLE_WIDTH &&
+                dyRef.current > 0
+            ) {
+                dyRef.current *= -1;
+                nextBallY = PLAYER_Y - BALL_SIZE;
+
+                const hitPoint =
+                    (nextBallX + BALL_SIZE / 2 - (playerXRef.current + PADDLE_WIDTH / 2)) /
+                    (PADDLE_WIDTH / 2);
+                dxRef.current = hitPoint * 5;
+            }
+
+            if (nextBallY < 0) {
+                const newPlayerScore = playerScoreRef.current + 1;
+                playerScoreRef.current = newPlayerScore;
+                setPlayerScore(newPlayerScore);
+                resetBall('player');
+                return;
+            }
+
+            if (nextBallY + BALL_SIZE > GAME_HEIGHT) {
+                const newBotScore = botScoreRef.current + 1;
+                botScoreRef.current = newBotScore;
+                setBotScore(newBotScore);
+                resetBall('bot');
+                return;
+            }
+
+            ballXRef.current = nextBallX;
+            ballYRef.current = nextBallY;
+            botXRef.current = nextBotX;
+
+            setBallX(nextBallX);
+            setBallY(nextBallY);
+            setBotX(nextBotX);
+
+            if (playerScoreRef.current >= WIN_SCORE || botScoreRef.current >= WIN_SCORE) {
+                setGameOver(true);
+                const result = playerScoreRef.current > botScoreRef.current ? 'win' : 'loss';
+                setStatusText(result === 'win' ? 'You win!' : 'Bot wins!');
+            }
+        }, 16);
+
+        return () => clearInterval(interval);
+    }, [gameStarted, gameOver, resetBall]);
 
     const startGame = () => {
         setPlayerScore(0);
@@ -49,8 +179,7 @@ export default function PongScreen() {
         ballXRef.current = GAME_WIDTH / 2 - BALL_SIZE / 2;
         ballYRef.current = GAME_HEIGHT / 2 - BALL_SIZE / 2;
 
-        dxRef.current = 2.5;
-        dyRef.current = 3;
+        setRandomBallDirection('random');
 
         setPlayerX(playerXRef.current);
         setBotX(botXRef.current);
