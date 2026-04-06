@@ -45,6 +45,7 @@ export default function PongScreen() {
     const botScoreRef = useRef(0);
     const startTimeRef = useRef(null);
     const firstPointUnlockedRef = useRef(false);
+    const survivorUnlockedRef = useRef(false);
     const finishedStatsRef = useRef(false);
 
     useEffect(() => {
@@ -98,6 +99,15 @@ export default function PongScreen() {
         [showAchievementPopup]
     );
 
+    const handleSurvivorAchievement = useCallback(async () => {
+        const result = await unlockAchievement('pong_survivor');
+        survivorUnlockedRef.current = true;
+
+        if (result.newlyUnlocked) {
+            showAchievementPopup(result.achievement);
+        }
+    }, [showAchievementPopup]);
+
     const setRandomBallDirection = useCallback((serveTo) => {
         const horizontalSpeed = Math.random() * 2 + 1.5;
         const verticalSpeed = Math.random() * 1.5 + 2.8;
@@ -146,8 +156,12 @@ export default function PongScreen() {
             timeInSeconds,
         });
 
+        if (timeInSeconds >= 30 && !survivorUnlockedRef.current) {
+            await handleSurvivorAchievement();
+        }
+
         setStatusText(result === 'win' ? 'You win!' : 'Bot wins!');
-    }, []);
+    }, [handleSurvivorAchievement]);
 
     useEffect(() => {
         if (!gameStarted || gameOver) return;
@@ -235,13 +249,25 @@ export default function PongScreen() {
             setBallY(nextBallY);
             setBotX(nextBotX);
 
+            const elapsedSeconds = Math.floor((Date.now() - startTimeRef.current) / 1000);
+            if (elapsedSeconds >= 30 && !survivorUnlockedRef.current) {
+                handleSurvivorAchievement();
+            }
+
             if (playerScoreRef.current >= WIN_SCORE || botScoreRef.current >= WIN_SCORE) {
                 finishGame();
             }
         }, 16);
 
         return () => clearInterval(interval);
-    }, [gameStarted, gameOver, finishGame, handlePointAchievement, resetBall]);
+    }, [
+        gameStarted,
+        gameOver,
+        finishGame,
+        handlePointAchievement,
+        handleSurvivorAchievement,
+        resetBall,
+    ]);
 
     const startGame = () => {
         setPlayerScore(0);
@@ -254,6 +280,7 @@ export default function PongScreen() {
         botScoreRef.current = 0;
         finishedStatsRef.current = false;
         firstPointUnlockedRef.current = false;
+        survivorUnlockedRef.current = false;
         startTimeRef.current = Date.now();
 
         playerXRef.current = (GAME_WIDTH - PADDLE_WIDTH) / 2;
@@ -296,11 +323,26 @@ export default function PongScreen() {
 
             <View style={styles.gameArea}>
                 <View
-                    style={[styles.paddle, styles.botPaddle, { left: botX, top: BOT_Y }]}
+                    style={[
+                        styles.paddle,
+                        styles.botPaddle,
+                        { left: botX, top: BOT_Y },
+                    ]}
                 />
-                <View style={[styles.ball, { left: ballX, top: ballY }]} />
+
                 <View
-                    style={[styles.paddle, styles.playerPaddle, { left: playerX, top: PLAYER_Y }]}
+                    style={[
+                        styles.ball,
+                        { left: ballX, top: ballY },
+                    ]}
+                />
+
+                <View
+                    style={[
+                        styles.paddle,
+                        styles.playerPaddle,
+                        { left: playerX, top: PLAYER_Y },
+                    ]}
                 />
             </View>
 
@@ -309,7 +351,10 @@ export default function PongScreen() {
                     <Text style={styles.controlButtonText}>◀ Left</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.controlButtonPrimary} onPress={startGame}>
+                <TouchableOpacity
+                    style={styles.controlButtonPrimary}
+                    onPress={startGame}
+                >
                     <Text style={styles.controlButtonPrimaryText}>
                         {gameStarted && !gameOver ? 'Restart' : 'Start'}
                     </Text>
