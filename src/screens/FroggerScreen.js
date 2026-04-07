@@ -1,6 +1,10 @@
 import { router } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import AchievementPopup from '../components/AchievementPopup';
+import { unlockAchievement } from '../utils/achievements';
+import { markGameAsPlayed } from '../utils/recentlyPlayed';
+import { updateFroggerStats } from '../utils/stats';
 
 const COLS = 7;
 const ROWS = 8;
@@ -38,7 +42,45 @@ export default function FroggerScreen() {
     const [wonGame, setWonGame] = useState(false);
     const [gameStarted, setGameStarted] = useState(false);
 
-    const checkCollision = useCallback((carList, playerPosition) => {
+    const [showPopup, setShowPopup] = useState(false);
+    const [unlockedAchievement, setUnlockedAchievement] = useState(null);
+
+    const startTimeRef = useRef(null);
+    const escapeUnlockedRef = useRef(false);
+    const statsSavedRef = useRef(false);
+
+    useEffect(() => {
+        const setupGame = async () => {
+        const playResult = await markGameAsPlayed({
+            title: 'Frogger',
+            route: '/frogger',
+        });
+
+        const firstGameResult = await unlockAchievement('first_game');
+
+        if (firstGameResult.newlyUnlocked && firstGameResult.achievement) {
+            setUnlockedAchievement(firstGameResult.achievement);
+            setShowPopup(true);
+            return;
+        }
+
+        if (playResult?.unlockedAchievements?.length > 0) {
+            setUnlockedAchievement(playResult.unlockedAchievements[0]);
+            setShowPopup(true);
+        }
+        };
+
+        setupGame();
+    }, []);
+
+    const showAchievementPopup = useCallback((achievement) => {
+        if (!achievement) return;
+        setUnlockedAchievement(achievement);
+        setShowPopup(true);
+    }, []);
+
+    const checkCollision = useCallback(
+        async (carList, playerPosition, currentLevel) => {
         if (playerPosition.row === 0 || playerPosition.row === ROWS - 1) return;
 
         const collided = carList.some((car) => {
@@ -49,37 +91,92 @@ export default function FroggerScreen() {
         if (collided) {
             setGameOver(true);
             setStatusText('You got hit!');
+
+            if (!statsSavedRef.current) {
+            statsSavedRef.current = true;
+
+            const timeInSeconds = Math.floor((Date.now() - startTimeRef.current) / 1000);
+
+            await updateFroggerStats({
+                won: false,
+                timeInSeconds,
+                levelReached: currentLevel,
+            });
+            }
         }
-    }, []);
+        },
+        []
+    );
+
+    const handleLevelClear = useCallback(async () => {
+        if (!escapeUnlockedRef.current) {
+        const escapeResult = await unlockAchievement('frogger_escape');
+        escapeUnlockedRef.current = true;
+
+        if (escapeResult.newlyUnlocked) {
+            showAchievementPopup(escapeResult.achievement);
+        }
+        }
+
+        if (level >= LEVELS_TO_WIN) {
+        setWonGame(true);
+        setStatusText('You win! Frogger complete!');
+
+        if (!statsSavedRef.current) {
+            statsSavedRef.current = true;
+
+            const timeInSeconds = Math.floor((Date.now() - startTimeRef.current) / 1000);
+
+            await updateFroggerStats({
+            won: true,
+            timeInSeconds,
+            levelReached: level,
+            });
+        }
+
+        const proResult = await unlockAchievement('frogger_pro');
+        if (proResult.newlyUnlocked) {
+            showAchievementPopup(proResult.achievement);
+        }
+
+        return;
+        }
+
+        const nextLevel = level + 1;
+        setLevel(nextLevel);
+        setPlayer(INITIAL_PLAYER);
+        setCars(createCarsForLevel(nextLevel));
+        setStatusText(`Nice! Level ${nextLevel}`);
+    }, [level, showAchievementPopup]);
 
     useEffect(() => {
         if (!gameStarted || gameOver || wonGame) return;
 
         const interval = setInterval(() => {
-            setCars((prevCars) => {
-                const updatedCars = prevCars.map((car) => {
-                    let nextCol = car.col + car.dir * car.speed * 0.2;
+        setCars((prevCars) => {
+            const updatedCars = prevCars.map((car) => {
+            let nextCol = car.col + car.dir * car.speed * 0.2;
 
-                    if (car.dir === 1 && nextCol > COLS) {
-                        nextCol = -1;
-                    } else if (car.dir === -1 && nextCol < -1) {
-                        nextCol = COLS;
-                    }
+            if (car.dir === 1 && nextCol > COLS) {
+                nextCol = -1;
+            } else if (car.dir === -1 && nextCol < -1) {
+                nextCol = COLS;
+            }
 
-                    return {
-                        ...car,
-                        col: nextCol,
-                    };
-                });
-
-                checkCollision(updatedCars, player);
-
-                return updatedCars;
+            return {
+                ...car,
+                col: nextCol,
+            };
             });
+
+            checkCollision(updatedCars, player, level);
+
+            return updatedCars;
+        });
         }, 90);
 
         return () => clearInterval(interval);
-    }, [gameStarted, gameOver, wonGame, player, checkCollision]);
+    }, [gameStarted, gameOver, wonGame, player, level, checkCollision]);
 
     const startGame = () => {
         setPlayer(INITIAL_PLAYER);
@@ -89,114 +186,117 @@ export default function FroggerScreen() {
         setGameOver(false);
         setWonGame(false);
         setGameStarted(true);
+
+        startTimeRef.current = Date.now();
+        escapeUnlockedRef.current = false;
+        statsSavedRef.current = false;
     };
 
-    const movePlayer = (rowChange, colChange) => {
+    const movePlayer = async (rowChange, colChange) => {
         if (!gameStarted || gameOver || wonGame) return;
 
         const nextRow = Math.max(0, Math.min(ROWS - 1, player.row + rowChange));
         const nextCol = Math.max(0, Math.min(COLS - 1, player.col + colChange));
 
         const nextPlayer = {
-            row: nextRow,
-            col: nextCol,
+        row: nextRow,
+        col: nextCol,
         };
 
         setPlayer(nextPlayer);
 
         if (nextRow === 0) {
-            setStatusText('Nice! You reached the top!');
-            return;
+        await handleLevelClear();
+        return;
         }
 
-        checkCollision(cars, nextPlayer);
+        await checkCollision(cars, nextPlayer, level);
     };
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Frogger</Text>
-            <Text style={styles.status}>{statusText}</Text>
-            <Text style={styles.levelText}>
-                Level {level} / {LEVELS_TO_WIN}
-            </Text>
+        <Text style={styles.title}>Frogger</Text>
+        <Text style={styles.status}>{statusText}</Text>
+        <Text style={styles.levelText}>
+            Level {level} / {LEVELS_TO_WIN}
+        </Text>
 
-            <View style={styles.board}>
-                {Array.from({ length: ROWS }).map((_, rowIndex) => (
-                    <View key={rowIndex} style={styles.row}>
-                        {Array.from({ length: COLS }).map((_, colIndex) => {
-                            const isGoal = rowIndex === 0;
-                            const isStart = rowIndex === ROWS - 1;
-                            const isRoad = rowIndex > 0 && rowIndex < ROWS - 1;
+        <View style={styles.board}>
+            {Array.from({ length: ROWS }).map((_, rowIndex) => (
+            <View key={rowIndex} style={styles.row}>
+                {Array.from({ length: COLS }).map((_, colIndex) => {
+                const isGoal = rowIndex === 0;
+                const isStart = rowIndex === ROWS - 1;
+                const isRoad = rowIndex > 0 && rowIndex < ROWS - 1;
 
-                            const hasPlayer =
-                                player.row === rowIndex && player.col === colIndex;
+                const hasPlayer =
+                    player.row === rowIndex && player.col === colIndex;
 
-                            const hasCar = cars.some(
-                                (car) =>
-                                    car.row === rowIndex &&
-                                    Math.round(car.col) === colIndex
-                            );
+                const hasCar = cars.some(
+                    (car) =>
+                    car.row === rowIndex && Math.round(car.col) === colIndex
+                );
 
-                            return (
-                                <View
-                                    key={`${rowIndex}-${colIndex}`}
-                                    style={[
-                                        styles.cell,
-                                        isGoal && styles.goalCell,
-                                        isRoad && styles.roadCell,
-                                        isStart && styles.startCell,
-                                    ]}
-                                >
-                                    {hasCar && <View style={styles.car} />}
-                                    {hasPlayer && <View style={styles.frog} />}
-                                </View>
-                            );
-                        })}
+                return (
+                    <View
+                    key={`${rowIndex}-${colIndex}`}
+                    style={[
+                        styles.cell,
+                        isGoal && styles.goalCell,
+                        isRoad && styles.roadCell,
+                        isStart && styles.startCell,
+                    ]}
+                    >
+                    {hasCar && <View style={styles.car} />}
+                    {hasPlayer && <View style={styles.frog} />}
                     </View>
-                ))}
+                );
+                })}
             </View>
+            ))}
+        </View>
 
-            <View style={styles.controls}>
-                <TouchableOpacity
-                    style={styles.arrowButton}
-                    onPress={() => movePlayer(-1, 0)}
-                >
-                    <Text style={styles.arrowText}>▲</Text>
-                </TouchableOpacity>
-
-                <View style={styles.middleControls}>
-                    <TouchableOpacity
-                        style={styles.arrowButton}
-                        onPress={() => movePlayer(0, -1)}
-                    >
-                        <Text style={styles.arrowText}>◀</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={styles.startButton} onPress={startGame}>
-                        <Text style={styles.startButtonText}>
-                            {gameStarted ? 'Restart' : 'Start'}
-                        </Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={styles.arrowButton}
-                        onPress={() => movePlayer(0, 1)}
-                    >
-                        <Text style={styles.arrowText}>▶</Text>
-                    </TouchableOpacity>
-                </View>
-
-                <TouchableOpacity
-                    style={styles.arrowButton}
-                    onPress={() => movePlayer(1, 0)}
-                >
-                    <Text style={styles.arrowText}>▼</Text>
-                </TouchableOpacity>
-            </View>
-
-            <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-                <Text style={styles.backButtonText}>Back</Text>
+        <View style={styles.controls}>
+            <TouchableOpacity style={styles.arrowButton} onPress={() => movePlayer(-1, 0)}>
+            <Text style={styles.arrowText}>▲</Text>
             </TouchableOpacity>
+
+            <View style={styles.middleControls}>
+            <TouchableOpacity style={styles.arrowButton} onPress={() => movePlayer(0, -1)}>
+                <Text style={styles.arrowText}>◀</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.startButton} onPress={startGame}>
+                <Text style={styles.startButtonText}>
+                {gameStarted ? 'Restart' : 'Start'}
+                </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.arrowButton} onPress={() => movePlayer(0, 1)}>
+                <Text style={styles.arrowText}>▶</Text>
+            </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity style={styles.arrowButton} onPress={() => movePlayer(1, 0)}>
+            <Text style={styles.arrowText}>▼</Text>
+            </TouchableOpacity>
+        </View>
+
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+            <Text style={styles.backButtonText}>Back</Text>
+        </TouchableOpacity>
+
+        <AchievementPopup
+            visible={showPopup}
+            achievement={unlockedAchievement}
+            onViewAchievements={() => {
+            setShowPopup(false);
+            router.push('/achievements');
+            }}
+            onClose={() => {
+            setShowPopup(false);
+            }}
+        />
         </View>
     );
 }
@@ -312,4 +412,4 @@ const styles = StyleSheet.create({
         color: '#6E43B5',
         fontWeight: '700',
     },
-})
+});
