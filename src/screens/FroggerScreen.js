@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const COLS = 7;
@@ -12,14 +12,58 @@ const INITIAL_PLAYER = {
     col: Math.floor(COLS / 2),
 };
 
+const createCarsForLevel = (level) => [
+    { id: 'lane1-a', row: 1, col: 0, dir: 1, speed: 1 + level * 0.15 },
+    { id: 'lane1-b', row: 1, col: 4, dir: 1, speed: 1 + level * 0.15 },
+
+    { id: 'lane2-a', row: 2, col: 6, dir: -1, speed: 1.1 + level * 0.15 },
+    { id: 'lane2-b', row: 2, col: 2, dir: -1, speed: 1.1 + level * 0.15 },
+
+    { id: 'lane3-a', row: 3, col: 1, dir: 1, speed: 1.25 + level * 0.15 },
+    { id: 'lane3-b', row: 3, col: 5, dir: 1, speed: 1.25 + level * 0.15 },
+
+    { id: 'lane4-a', row: 4, col: 6, dir: -1, speed: 1.35 + level * 0.15 },
+    { id: 'lane4-b', row: 4, col: 3, dir: -1, speed: 1.35 + level * 0.15 },
+
+    { id: 'lane5-a', row: 5, col: 0, dir: 1, speed: 1.5 + level * 0.15 },
+    { id: 'lane5-b', row: 5, col: 4, dir: 1, speed: 1.5 + level * 0.15 },
+];
+
 export default function FroggerScreen() {
     const [player, setPlayer] = useState(INITIAL_PLAYER);
+    const [cars, setCars] = useState(createCarsForLevel(1));
     const [level, setLevel] = useState(1);
     const [statusText, setStatusText] = useState('Get to the top!');
     const [gameStarted, setGameStarted] = useState(false);
 
+    useEffect(() => {
+        if (!gameStarted) return;
+
+        const interval = setInterval(() => {
+            setCars((prevCars) =>
+                prevCars.map((car) => {
+                    let nextCol = car.col + car.dir * car.speed * 0.2;
+
+                    if (car.dir === 1 && nextCol > COLS) {
+                        nextCol = -1;
+                    } else if (car.dir === -1 && nextCol < -1) {
+                        nextCol = COLS;
+                    }
+
+                    return {
+                        ...car,
+                        col: nextCol,
+                    };
+                })
+            );
+        }, 90);
+
+        return () => clearInterval(interval);
+    }, [gameStarted]);
+
     const startGame = () => {
         setPlayer(INITIAL_PLAYER);
+        setCars(createCarsForLevel(1));
         setLevel(1);
         setStatusText('Get to the top!');
         setGameStarted(true);
@@ -60,6 +104,12 @@ export default function FroggerScreen() {
                             const hasPlayer =
                                 player.row === rowIndex && player.col === colIndex;
 
+                            const hasCar = cars.some(
+                                (car) =>
+                                    car.row === rowIndex &&
+                                    Math.round(car.col) === colIndex
+                            );
+
                             return (
                                 <View
                                     key={`${rowIndex}-${colIndex}`}
@@ -70,6 +120,7 @@ export default function FroggerScreen() {
                                         isStart && styles.startCell,
                                     ]}
                                 >
+                                    {hasCar && <View style={styles.car} />}
                                     {hasPlayer && <View style={styles.frog} />}
                                 </View>
                             );
@@ -183,6 +234,13 @@ const styles = StyleSheet.create({
         height: 20,
         borderRadius: 10,
         backgroundColor: '#43B75F',
+    },
+    car: {
+        width: 26,
+        height: 16,
+        borderRadius: 6,
+        backgroundColor: '#6E43B5',
+        position: 'absolute',
     },
     controls: {
         alignItems: 'center',
