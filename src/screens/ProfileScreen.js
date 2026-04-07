@@ -1,10 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Image, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 const PROFILE_KEY = 'gridlock_profile_data';
+const PROFILE_IMAGE_KEY = 'gridlock_profile_image';
 
 const defaultProfile = {
     username: 'ben_is_jammin',
@@ -12,16 +14,18 @@ const defaultProfile = {
     lastName: 'Jammin',
     email: 'benjammin@gmail.com',
     dob: '03/04/1990',
-    };
+};
 
 export default function ProfileScreen() {
     const [profile, setProfile] = useState(defaultProfile);
     const [editingField, setEditingField] = useState(null);
     const [tempValue, setTempValue] = useState('');
     const [modalVisible, setModalVisible] = useState(false);
+    const [profileImageUri, setProfileImageUri] = useState(null);
 
     useEffect(() => {
         loadProfile();
+        loadProfileImage();
     }, []);
 
     const loadProfile = async () => {
@@ -35,11 +39,55 @@ export default function ProfileScreen() {
         }
     };
 
+    const loadProfileImage = async () => {
+        try {
+        const savedImageUri = await AsyncStorage.getItem(PROFILE_IMAGE_KEY);
+        if (savedImageUri) {
+            setProfileImageUri(savedImageUri);
+        }
+        } catch (error) {
+        console.log('Error loading profile image:', error);
+        }
+    };
+
     const saveProfileToStorage = async (updatedProfile) => {
         try {
         await AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(updatedProfile));
         } catch (error) {
         console.log('Error saving profile:', error);
+        }
+    };
+
+    const pickProfileImage = async () => {
+        try {
+        const permissionResult =
+            await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+        if (!permissionResult.granted) {
+            Alert.alert(
+            'Permission needed',
+            'Please allow gallery access to choose a profile picture.'
+            );
+            return;
+        }
+
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ['images'],
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 0.8,
+        });
+
+        if (result.canceled) return;
+
+        const selectedUri = result.assets?.[0]?.uri;
+        if (!selectedUri) return;
+
+        setProfileImageUri(selectedUri);
+        await AsyncStorage.setItem(PROFILE_IMAGE_KEY, selectedUri);
+        } catch (error) {
+        console.log('Error picking profile image:', error);
+        Alert.alert('Error', 'Could not open image picker.');
         }
     };
 
@@ -111,10 +159,19 @@ export default function ProfileScreen() {
 
         <View style={styles.profileImageWrap}>
             <Image
-            source={require('../../assets/images/userpic.png')}
+            source={
+                profileImageUri
+                ? { uri: profileImageUri }
+                : require('../../assets/images/userpic.png')
+            }
             style={styles.profileImage}
             />
-            <TouchableOpacity style={styles.profileEditIcon}>
+
+            <TouchableOpacity
+            style={styles.profileEditIcon}
+            onPress={pickProfileImage}
+            activeOpacity={0.8}
+            >
             <Ionicons name="create" size={16} color="#8E63B7" />
             </TouchableOpacity>
         </View>
