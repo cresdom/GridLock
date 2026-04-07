@@ -5,6 +5,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 const COLS = 7;
 const ROWS = 8;
 const CELL_SIZE = 42;
+const LEVELS_TO_WIN = 3;
 
 const INITIAL_PLAYER = {
     row: ROWS - 1,
@@ -12,13 +13,41 @@ const INITIAL_PLAYER = {
 };
 
 export default function FroggerScreen() {
-    const [player] = useState(INITIAL_PLAYER);
+    const [player, setPlayer] = useState(INITIAL_PLAYER);
+    const [level, setLevel] = useState(1);
+    const [statusText, setStatusText] = useState('Get to the top!');
+    const [gameStarted, setGameStarted] = useState(false);
+
+    const startGame = () => {
+        setPlayer(INITIAL_PLAYER);
+        setLevel(1);
+        setStatusText('Get to the top!');
+        setGameStarted(true);
+    };
+
+    const movePlayer = (rowChange, colChange) => {
+        if (!gameStarted) return;
+
+        const nextRow = Math.max(0, Math.min(ROWS - 1, player.row + rowChange));
+        const nextCol = Math.max(0, Math.min(COLS - 1, player.col + colChange));
+
+        setPlayer({
+            row: nextRow,
+            col: nextCol,
+        });
+
+        if (nextRow === 0) {
+            setStatusText('Nice! You reached the top!');
+        }
+    };
 
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Frogger</Text>
-            <Text style={styles.status}>Get to the top!</Text>
-            <Text style={styles.levelText}>Level 1 / 3</Text>
+            <Text style={styles.status}>{statusText}</Text>
+            <Text style={styles.levelText}>
+                Level {level} / {LEVELS_TO_WIN}
+            </Text>
 
             <View style={styles.board}>
                 {Array.from({ length: ROWS }).map((_, rowIndex) => (
@@ -50,25 +79,39 @@ export default function FroggerScreen() {
             </View>
 
             <View style={styles.controls}>
-                <TouchableOpacity style={styles.arrowButton}>
+                <TouchableOpacity
+                    style={styles.arrowButton}
+                    onPress={() => movePlayer(-1, 0)}
+                >
                     <Text style={styles.arrowText}>▲</Text>
                 </TouchableOpacity>
 
                 <View style={styles.middleControls}>
-                    <TouchableOpacity style={styles.arrowButton}>
+                    <TouchableOpacity
+                        style={styles.arrowButton}
+                        onPress={() => movePlayer(0, -1)}
+                    >
                         <Text style={styles.arrowText}>◀</Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.startButton}>
-                        <Text style={styles.startButtonText}>Start</Text>
+                    <TouchableOpacity style={styles.startButton} onPress={startGame}>
+                        <Text style={styles.startButtonText}>
+                            {gameStarted ? 'Restart' : 'Start'}
+                        </Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.arrowButton}>
+                    <TouchableOpacity
+                        style={styles.arrowButton}
+                        onPress={() => movePlayer(0, 1)}
+                    >
                         <Text style={styles.arrowText}>▶</Text>
                     </TouchableOpacity>
                 </View>
 
-                <TouchableOpacity style={styles.arrowButton}>
+                <TouchableOpacity
+                    style={styles.arrowButton}
+                    onPress={() => movePlayer(1, 0)}
+                >
                     <Text style={styles.arrowText}>▼</Text>
                 </TouchableOpacity>
             </View>
