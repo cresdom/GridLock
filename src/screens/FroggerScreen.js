@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const COLS = 7;
@@ -34,14 +34,30 @@ export default function FroggerScreen() {
     const [cars, setCars] = useState(createCarsForLevel(1));
     const [level, setLevel] = useState(1);
     const [statusText, setStatusText] = useState('Get to the top!');
+    const [gameOver, setGameOver] = useState(false);
+    const [wonGame, setWonGame] = useState(false);
     const [gameStarted, setGameStarted] = useState(false);
 
+    const checkCollision = useCallback((carList, playerPosition) => {
+        if (playerPosition.row === 0 || playerPosition.row === ROWS - 1) return;
+
+        const collided = carList.some((car) => {
+            if (car.row !== playerPosition.row) return false;
+            return Math.round(car.col) === playerPosition.col;
+        });
+
+        if (collided) {
+            setGameOver(true);
+            setStatusText('You got hit!');
+        }
+    }, []);
+
     useEffect(() => {
-        if (!gameStarted) return;
+        if (!gameStarted || gameOver || wonGame) return;
 
         const interval = setInterval(() => {
-            setCars((prevCars) =>
-                prevCars.map((car) => {
+            setCars((prevCars) => {
+                const updatedCars = prevCars.map((car) => {
                     let nextCol = car.col + car.dir * car.speed * 0.2;
 
                     if (car.dir === 1 && nextCol > COLS) {
@@ -54,35 +70,46 @@ export default function FroggerScreen() {
                         ...car,
                         col: nextCol,
                     };
-                })
-            );
+                });
+
+                checkCollision(updatedCars, player);
+
+                return updatedCars;
+            });
         }, 90);
 
         return () => clearInterval(interval);
-    }, [gameStarted]);
+    }, [gameStarted, gameOver, wonGame, player, checkCollision]);
 
     const startGame = () => {
         setPlayer(INITIAL_PLAYER);
         setCars(createCarsForLevel(1));
         setLevel(1);
         setStatusText('Get to the top!');
+        setGameOver(false);
+        setWonGame(false);
         setGameStarted(true);
     };
 
     const movePlayer = (rowChange, colChange) => {
-        if (!gameStarted) return;
+        if (!gameStarted || gameOver || wonGame) return;
 
         const nextRow = Math.max(0, Math.min(ROWS - 1, player.row + rowChange));
         const nextCol = Math.max(0, Math.min(COLS - 1, player.col + colChange));
 
-        setPlayer({
+        const nextPlayer = {
             row: nextRow,
             col: nextCol,
-        });
+        };
+
+        setPlayer(nextPlayer);
 
         if (nextRow === 0) {
             setStatusText('Nice! You reached the top!');
+            return;
         }
+
+        checkCollision(cars, nextPlayer);
     };
 
     return (
@@ -285,4 +312,4 @@ const styles = StyleSheet.create({
         color: '#6E43B5',
         fontWeight: '700',
     },
-});
+})
