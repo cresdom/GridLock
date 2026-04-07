@@ -1,8 +1,19 @@
 import { router } from 'expo-router';
-import React from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
+const COLS = 7;
+const ROWS = 8;
+const CELL_SIZE = 42;
+
+const INITIAL_PLAYER = {
+    row: ROWS - 1,
+    col: Math.floor(COLS / 2),
+};
+
 export default function FroggerScreen() {
+    const [player] = useState(INITIAL_PLAYER);
+
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Frogger</Text>
@@ -10,7 +21,32 @@ export default function FroggerScreen() {
             <Text style={styles.levelText}>Level 1 / 3</Text>
 
             <View style={styles.board}>
-                <Text style={styles.boardPlaceholder}>Game board coming soon</Text>
+                {Array.from({ length: ROWS }).map((_, rowIndex) => (
+                    <View key={rowIndex} style={styles.row}>
+                        {Array.from({ length: COLS }).map((_, colIndex) => {
+                            const isGoal = rowIndex === 0;
+                            const isStart = rowIndex === ROWS - 1;
+                            const isRoad = rowIndex > 0 && rowIndex < ROWS - 1;
+
+                            const hasPlayer =
+                                player.row === rowIndex && player.col === colIndex;
+
+                            return (
+                                <View
+                                    key={`${rowIndex}-${colIndex}`}
+                                    style={[
+                                        styles.cell,
+                                        isGoal && styles.goalCell,
+                                        isRoad && styles.roadCell,
+                                        isStart && styles.startCell,
+                                    ]}
+                                >
+                                    {hasPlayer && <View style={styles.frog} />}
+                                </View>
+                            );
+                        })}
+                    </View>
+                ))}
             </View>
 
             <View style={styles.controls}>
@@ -71,19 +107,39 @@ const styles = StyleSheet.create({
         marginBottom: 14,
     },
     board: {
-        width: 340,
-        height: 380,
         backgroundColor: '#FFFFFF',
+        padding: 8,
         borderRadius: 20,
         borderWidth: 2,
         borderColor: '#D9C7FF',
         marginBottom: 20,
+    },
+    row: {
+        flexDirection: 'row',
+    },
+    cell: {
+        width: CELL_SIZE,
+        height: CELL_SIZE,
+        margin: 2,
+        borderRadius: 10,
         alignItems: 'center',
         justifyContent: 'center',
+        backgroundColor: '#EEE7FF',
     },
-    boardPlaceholder: {
-        color: '#7D68A8',
-        fontSize: 16,
+    goalCell: {
+        backgroundColor: '#D6F5D6',
+    },
+    roadCell: {
+        backgroundColor: '#D8C6FF',
+    },
+    startCell: {
+        backgroundColor: '#F8E7B7',
+    },
+    frog: {
+        width: 20,
+        height: 20,
+        borderRadius: 10,
+        backgroundColor: '#43B75F',
     },
     controls: {
         alignItems: 'center',
