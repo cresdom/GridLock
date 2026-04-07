@@ -1,13 +1,16 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useFocusEffect } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { RectButton, } from 'react-native-gesture-handler';
+import { RectButton } from 'react-native-gesture-handler';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getLastPlayedGame, resetLastPlayedGame } from '../utils/recentlyPlayed';
+
+const PROFILE_IMAGE_KEY = 'gridlock_profile_image';
 
 const games = [
     {
@@ -46,16 +49,31 @@ function formatLastPlayed(dateString) {
 export default function HomeScreen() {
     const [activeTab, setActiveTab] = useState('Library');
     const [lastPlayedGame, setLastPlayedGame] = useState(null);
+    const [profileImageUri, setProfileImageUri] = useState(null);
 
     useFocusEffect(
         useCallback(() => {
-        loadRecentGame();
+            loadRecentGame();
+            loadProfileImage();
         }, [])
     );
 
     const loadRecentGame = async () => {
         const savedGame = await getLastPlayedGame();
         setLastPlayedGame(savedGame);
+    };
+
+    const loadProfileImage = async () => {
+        try {
+            const savedImageUri = await AsyncStorage.getItem(PROFILE_IMAGE_KEY);
+            if (savedImageUri) {
+                setProfileImageUri(savedImageUri);
+            } else {
+                setProfileImageUri(null);
+            }
+        } catch (error) {
+            console.log('Error loading profile image:', error);
+        }
     };
 
     const handleDeleteRecent = async () => {
@@ -65,147 +83,151 @@ export default function HomeScreen() {
 
     const renderRightActions = () => {
         return (
-        <RectButton style={styles.deleteButton} onPress={handleDeleteRecent}>
-            <Ionicons name="trash-outline" size={24} color="#fff" />
-            <Text style={styles.deleteButtonText}>Delete</Text>
-        </RectButton>
+            <RectButton style={styles.deleteButton} onPress={handleDeleteRecent}>
+                <Ionicons name="trash-outline" size={24} color="#fff" />
+                <Text style={styles.deleteButtonText}>Delete</Text>
+            </RectButton>
         );
     };
 
     const renderGameCard = ({ item }) => (
         <TouchableOpacity
-        style={styles.cardWrapper}
-        onPress={() => router.push(item.route)}
-        activeOpacity={0.9}
-        >
-        <View style={styles.gameCard}>
-            <Image source={item.image} style={styles.gameImage} resizeMode="contain" />
-        </View>
-
-        <TouchableOpacity
-            style={styles.playButton}
+            style={styles.cardWrapper}
             onPress={() => router.push(item.route)}
+            activeOpacity={0.9}
         >
-            <Text style={styles.playButtonText}>{item.title}</Text>
-            <Text style={styles.playArrow}>→</Text>
-        </TouchableOpacity>
+            <View style={styles.gameCard}>
+                <Image source={item.image} style={styles.gameImage} resizeMode="contain" />
+            </View>
+
+            <TouchableOpacity
+                style={styles.playButton}
+                onPress={() => router.push(item.route)}
+            >
+                <Text style={styles.playButtonText}>{item.title}</Text>
+                <Text style={styles.playArrow}>→</Text>
+            </TouchableOpacity>
         </TouchableOpacity>
     );
 
     return (
         <SafeAreaView style={styles.container}>
-        <View style={styles.topSection}>
-            <View style={styles.profileRow}>
-            <View style={styles.profileLeft}>
-                <TouchableOpacity onPress={() => router.push('/profile')}>
-                <Image
-                    source={require('../../assets/images/userpic.png')}
-                    style={styles.avatar}
-                />
-                </TouchableOpacity>
+            <View style={styles.topSection}>
+                <View style={styles.profileRow}>
+                    <View style={styles.profileLeft}>
+                        <TouchableOpacity onPress={() => router.push('/profile')}>
+                            <Image
+                                source={
+                                    profileImageUri
+                                        ? { uri: profileImageUri }
+                                        : require('../../assets/images/userpic.png')
+                                }
+                                style={styles.avatar}
+                            />
+                        </TouchableOpacity>
 
-                <View>
-                <Text style={styles.logoText}>GridLock</Text>
-                <Text style={styles.helloText}>Hey, Ben!</Text>
-                </View>
-            </View>
-
-            <TouchableOpacity onPress={() => router.push('/settings')}>
-                <Ionicons name="settings-outline" size={26} color="#7A43D1" />
-            </TouchableOpacity>
-            </View>
-
-            <View style={styles.gamesSection}>
-            <Text style={styles.heading}>Games</Text>
-
-            <View style={styles.tabsRow}>
-                <TouchableOpacity onPress={() => setActiveTab('Library')}>
-                <Text style={[styles.tabText, activeTab === 'Library' && styles.activeTab]}>
-                    Library
-                </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity onPress={() => setActiveTab('Recently Played')}>
-                <Text
-                    style={[
-                    styles.tabText,
-                    activeTab === 'Recently Played' && styles.activeTab,
-                    ]}
-                >
-                    Recently Played
-                </Text>
-                </TouchableOpacity>
-            </View>
-
-            {activeTab === 'Library' ? (
-                <FlatList
-                data={games}
-                renderItem={renderGameCard}
-                keyExtractor={(item) => item.id}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.carouselContent}
-                snapToAlignment="start"
-                decelerationRate="fast"
-                />
-            ) : lastPlayedGame ? (
-                <Swipeable
-                renderRightActions={renderRightActions}
-                overshootRight={false}
-                >
-                <TouchableOpacity
-                    style={styles.recentCard}
-                    onPress={() => router.push(lastPlayedGame.route)}
-                    activeOpacity={0.9}
-                >
-                    <View style={styles.recentTopRow}>
-                    <Text style={styles.recentGameTitle}>{lastPlayedGame.title}</Text>
-                    <TouchableOpacity onPress={() => router.push(lastPlayedGame.route)}>
-                        <Ionicons name="play-circle-outline" size={28} color="#7A43D1" />
-                    </TouchableOpacity>
+                        <View>
+                            <Text style={styles.logoText}>GridLock</Text>
+                            <Text style={styles.helloText}>Hey, Ben!</Text>
+                        </View>
                     </View>
 
-                    <Text style={styles.recentInfo}>
-                    Last Played: {formatLastPlayed(lastPlayedGame.lastPlayed)}
-                    </Text>
-                    <Text style={styles.recentInfo}>
-                    Times Played: {lastPlayedGame.timesPlayed}
-                    </Text>
-                </TouchableOpacity>
-                </Swipeable>
-            ) : (
-                <View style={styles.emptyRecentCard}>
-                <Text style={styles.emptyRecentText}>
-                    Nothing to see here yet. Come back when you have played a game!
-                </Text>
+                    <TouchableOpacity onPress={() => router.push('/settings')}>
+                        <Ionicons name="settings-outline" size={26} color="#7A43D1" />
+                    </TouchableOpacity>
                 </View>
-            )}
+
+                <View style={styles.gamesSection}>
+                    <Text style={styles.heading}>Games</Text>
+
+                    <View style={styles.tabsRow}>
+                        <TouchableOpacity onPress={() => setActiveTab('Library')}>
+                            <Text style={[styles.tabText, activeTab === 'Library' && styles.activeTab]}>
+                                Library
+                            </Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity onPress={() => setActiveTab('Recently Played')}>
+                            <Text
+                                style={[
+                                    styles.tabText,
+                                    activeTab === 'Recently Played' && styles.activeTab,
+                                ]}
+                            >
+                                Recently Played
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    {activeTab === 'Library' ? (
+                        <FlatList
+                            data={games}
+                            renderItem={renderGameCard}
+                            keyExtractor={(item) => item.id}
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            contentContainerStyle={styles.carouselContent}
+                            snapToAlignment="start"
+                            decelerationRate="fast"
+                        />
+                    ) : lastPlayedGame ? (
+                        <Swipeable
+                            renderRightActions={renderRightActions}
+                            overshootRight={false}
+                        >
+                            <TouchableOpacity
+                                style={styles.recentCard}
+                                onPress={() => router.push(lastPlayedGame.route)}
+                                activeOpacity={0.9}
+                            >
+                                <View style={styles.recentTopRow}>
+                                    <Text style={styles.recentGameTitle}>{lastPlayedGame.title}</Text>
+                                    <TouchableOpacity onPress={() => router.push(lastPlayedGame.route)}>
+                                        <Ionicons name="play-circle-outline" size={28} color="#7A43D1" />
+                                    </TouchableOpacity>
+                                </View>
+
+                                <Text style={styles.recentInfo}>
+                                    Last Played: {formatLastPlayed(lastPlayedGame.lastPlayed)}
+                                </Text>
+                                <Text style={styles.recentInfo}>
+                                    Times Played: {lastPlayedGame.timesPlayed}
+                                </Text>
+                            </TouchableOpacity>
+                        </Swipeable>
+                    ) : (
+                        <View style={styles.emptyRecentCard}>
+                            <Text style={styles.emptyRecentText}>
+                                Nothing to see here yet. Come back when you have played a game!
+                            </Text>
+                        </View>
+                    )}
+                </View>
             </View>
-        </View>
 
-        <View style={styles.bottomNav}>
-            <TouchableOpacity style={styles.navItem} onPress={() => router.push('/home')}>
-            <FontAwesome name="home" size={30} color="#7A43D1" />
-            </TouchableOpacity>
+            <View style={styles.bottomNav}>
+                <TouchableOpacity style={styles.navItem} onPress={() => router.push('/home')}>
+                    <FontAwesome name="home" size={30} color="#7A43D1" />
+                </TouchableOpacity>
 
-            <View style={styles.navDivider} />
+                <View style={styles.navDivider} />
 
-            <TouchableOpacity style={styles.navItem} onPress={() => router.push('/stats')}>
-            <MaterialIcons name="leaderboard" size={30} color="#7A43D1" />
-            </TouchableOpacity>
+                <TouchableOpacity style={styles.navItem} onPress={() => router.push('/stats')}>
+                    <MaterialIcons name="leaderboard" size={30} color="#7A43D1" />
+                </TouchableOpacity>
 
-            <View style={styles.navDivider} />
+                <View style={styles.navDivider} />
 
-            <TouchableOpacity style={styles.navItem} onPress={() => router.push('/achievements')}>
-            <FontAwesome name="trophy" size={30} color="#7A43D1" />
-            </TouchableOpacity>
+                <TouchableOpacity style={styles.navItem} onPress={() => router.push('/achievements')}>
+                    <FontAwesome name="trophy" size={30} color="#7A43D1" />
+                </TouchableOpacity>
 
-            <View style={styles.navDivider} />
+                <View style={styles.navDivider} />
 
-            <TouchableOpacity style={styles.navItem} onPress={() => router.push('/profile')}>
-            <Ionicons name="person" size={30} color="#7A43D1" />
-            </TouchableOpacity>
-        </View>
+                <TouchableOpacity style={styles.navItem} onPress={() => router.push('/profile')}>
+                    <Ionicons name="person" size={30} color="#7A43D1" />
+                </TouchableOpacity>
+            </View>
         </SafeAreaView>
     );
 }
