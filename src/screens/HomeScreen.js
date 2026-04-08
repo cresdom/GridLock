@@ -16,25 +16,25 @@ const games = [
     {
         id: '1',
         title: 'Memory Match',
-        route: '/memorymatch',
+        route: '/memorymatch-intro',
         image: require('../../assets/images/memorymatch.png'),
     },
     {
         id: '2',
         title: 'Tic Tac Toe',
-        route: '/tictactoe',
+        route: '/tictactoe-intro',
         image: require('../../assets/images/tictactoe.png'),
     },
     {
         id: '3',
         title: 'Pong',
-        route: '/pong',
+        route: '/pong-intro',
         image: require('../../assets/images/pong.png'),
     },
     {
         id: '4',
         title: 'Frogger',
-        route: '/frogger',
+        route: '/frogger-intro',
         image: require('../../assets/images/frogger.png'),
     },
 ];
