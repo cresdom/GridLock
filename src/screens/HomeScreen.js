@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
     topSection: {
         paddingHorizontal: 24,
         paddingTop: 34,
-        paddingBottom: 140,
+        paddingBottom: 120,
     },
     profileRow: {
         flexDirection: 'row',
@@ -270,7 +270,7 @@ const styles = StyleSheet.create({
         marginTop: 2,
     },
     gamesSection: {
-        marginTop: 24,
+        marginTop: 45,
     },
     heading: {
         fontSize: 26,
